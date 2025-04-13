@@ -1,0 +1,26 @@
+.timer-container {
+    display: inline-flex;
+    align-items: center;
+    margin-left: 10px;
+}
+
+.timer-button {
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 8px 0 8px 12px;
+    border-color: transparent transparent transparent var(--text-normal);
+    cursor: pointer;
+    margin-right: 5px;
+}
+
+.timer-button.paused {
+    border-style: double;
+    border-width: 0 0 0 12px;
+    border-color: transparent transparent transparent var(--text-normal);
+}
+
+.timer-display {
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
