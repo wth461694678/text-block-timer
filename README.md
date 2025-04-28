@@ -26,7 +26,7 @@
 1. 在文本行上右键点击
 2. 选择"开始计时"、"暂停计时"或"继续计时"
 3. 计时器会以 `⏳00:00:00`格式显示在文本块的末尾
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click" width="50%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="50%" alt="">
 
 
 ## 注意事项
