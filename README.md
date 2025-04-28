@@ -20,13 +20,13 @@
 ### （一）命令行+快捷键（推荐⭐️）
 1. 为命令 "Text Block Timer: Toggle timer" 配置快捷键，方便快速使用
 2. 当光标在某个文本块时，按下快捷键，即可实现timer的开始、暂停、继续操作
-![](https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif)
+![](https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif=200x)
 
 ### （二）鼠标操作
 1. 在文本行上右键点击
 2. 选择"开始计时"、"暂停计时"或"继续计时"
 3. 计时器会以 `⏳00:00:00`格式显示在文本块的末尾
-![](https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif)
+![](https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif=200x)
 
 
 ## 注意事项
