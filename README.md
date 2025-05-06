@@ -1,39 +1,44 @@
-# 文本块计时器插件
+[English](README.md) | [中文](README.zh.md)
 
-一个为Obsidian设计的文本块计时工具，可以在笔记中为任意文本行添加计时功能。
+# Text Block Timer Plugin
 
-## 功能特性
+A text block timing tool designed for Obsidian, allowing you to add timing functionality to any text line in your notes.
 
-- 为文本行添加计时器（正计时）
-- ▶️/⏸️ 支持开始、暂停、继续计时，支持一个任务的多段计时累计
-- ⏳ 实时显示累计时间
-- 📊 计时数据持久化保存
+## Features
 
-## 安装方法
+- Add timers to text lines (count-up timing)
+- ▶️/⏸️ Supports start, pause, and continue timing, with multi-segment timing accumulation for a single task
+- ⏳ Real-time display of accumulated time
+- 📊 Timing data is persistently saved
 
-1. 在Obsidian中打开"设置" → "社区插件"
-2. 点击"浏览"并搜索"文本块计时器"
-3. 安装并启用插件
+## Installation Method
 
-## 使用方法
+1. In Obsidian, open "Settings" → "Community Plugins"
+2. Click "Browse" and search for "Text Block Timer"
+3. Install and enable the plugin
 
-### （一）命令行+快捷键（推荐⭐️）
-1. 为命令 "Text Block Timer: Toggle timer" 配置快捷键，方便快速使用
-2. 当光标在某个文本块时，按下快捷键，即可实现timer的开始、暂停、继续操作
+## Usage Method
+
+### (1) Command Palette + Shortcuts (Recommended ⭐️)
+1. Configure a shortcut for the command "Text Block Timer: Toggle timer" for quick access
+2. When your cursor is on a text block, press the shortcut to start, pause, or continue the timer
 <img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="50%" alt="">
 
-### （二）鼠标操作
-1. 在文本行上右键点击
-2. 选择"开始计时"、"暂停计时"或"继续计时"
-3. 计时器会以 `⏳00:00:00`格式显示在文本块的末尾
+### (2) Mouse Operations
+1. Right-click on a text line
+2. Select "Start Timing", "Pause Timing", or "Continue Timing"
+3. The timer will display in the format `⏳00:00:00` at the end of the text block
 <img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="50%" alt="">
 
+## Notes
 
-## 注意事项
+- It is recommended to keep the file containing the text block open; otherwise, the real-time second updates of the timer may fail. However, the file will retain the timer state, which can be manually resumed when the file is opened again.
 
-- 建议保持文本块所在文件打开，否则会导致计时器的实时跳秒失效。但文件会保留计时器状态，下次打开文件时可以手动恢复计时。
+## Development Information
 
-## 开发信息
+- Developer: frankthwang
+- Version: 1.0.0
 
-- 开发者: frankthwang
-- 版本: 1.0.0
+### Regarding the Image Links
+
+The image links you provided could not be successfully parsed. This might be due to network issues or problems with the links themselves. You can check the validity of the web page links and try again if needed.
