@@ -14,7 +14,7 @@ class TimerRenderer {
             .substr(11, 8);
         const colorStyle =
             timerData.Status === 'Running' ? 'style="color: #10b981;"' : '';
-        return `<span class="timer-btn" timerId="${timerData.timerId}" Status="${timerData.Status}" AccumulatedTime="${timerData.AccumulatedTime}" currentStartTimeStamp="${timerData.currentStartTimeStamp}" lineId="${timerData.lineId}" ${colorStyle}> 【⏳${formatted} 】 </span>`;
+        return `<span class="timer-btn" timerId="${timerData.timerId}" Status="${timerData.Status}" AccumulatedTime="${timerData.AccumulatedTime}" currentStartTimeStamp="${timerData.currentStartTimeStamp}" lineId="${timerData.lineId}" ${colorStyle}>【⏳${formatted} 】 </span>`;
     }
 }
 
@@ -273,7 +273,7 @@ class TimerPlugin extends obsidian.Plugin {
 
             // Check for markdown checkbox or list patterns after indentation
             const afterIndent = lineText.slice(indentLen);
-            const checkboxMatch = /^([+\-*]\s\[[ x]\]|\s*[-+*]\s)/.exec(afterIndent);
+            const checkboxMatch = /^([+\-*]\s\[[^\]]\]\s+|\s*[-+*]\s+)/.exec(afterIndent);
             const checkboxLen = checkboxMatch ? checkboxMatch[1].length : 0;
 
             before = after = indentLen + checkboxLen;
