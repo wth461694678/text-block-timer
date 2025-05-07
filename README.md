@@ -20,25 +20,22 @@ A text block timing tool designed for Obsidian, allowing you to add timing funct
 ## Usage Method
 
 ### (1) Command Palette + Shortcuts (Recommended ⭐️)
-1. Configure a shortcut for the command "Text Block Timer: Toggle timer" for quick access
-2. When your cursor is on a text block, press the shortcut to start, pause, or continue the timer
+1. Assign a shortcut for the command "Text Block Timer: Toggle timer" for quick access
+2. Place your cursor on a text block, press the shortcut to start, pause, or continue
 <img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="50%" alt="">
 
 ### (2) Mouse Operations
 1. Right-click on a text line
-2. Select "Start Timing", "Pause Timing", or "Continue Timing"
-3. The timer will display in the format `⏳00:00:00` at the end of the text block
+2. Select "Start Timer", "Pause Timer", or "Continue Timer"
+3. The timer will display in the format `【⏳00:00:00 】` at the start of the text block
 <img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="50%" alt="">
 
 ## Notes
 
-- It is recommended to keep the file containing the text block open; otherwise, the real-time second updates of the timer may fail. However, the file will retain the timer state, which can be manually resumed when the file is opened again.
+- It is recommended to keep the file (containing a running tiemr) open; otherwise, the real-time second updates of the timer may fail.
+- However, the file will record the timer state, which can be manually resumed.
 
 ## Development Information
 
 - Developer: frankthwang
 - Version: 1.0.0
-
-### Regarding the Image Links
-
-The image links you provided could not be successfully parsed. This might be due to network issues or problems with the links themselves. You can check the validity of the web page links and try again if needed.
