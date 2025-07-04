@@ -2,7 +2,7 @@
 
 # Text Block Timer Plugin
 
-A text block timing tool designed for Obsidian, allowing you to add timing functionality to any text line in your notes.
+A text block timing tool designed for Obsidian, allowing you to add **count-up** timing functionality to any text line in your notes.
 
 ## Features
 
