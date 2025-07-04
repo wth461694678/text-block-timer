@@ -6,7 +6,7 @@ A text block timing tool designed for Obsidian, allowing you to add timing funct
 
 ## Features
 
-    `<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo.gif" width="50%" alt="">`
+   <img src="https://github.com/wth461694678/text-block-timer/blob/main/demo.gif" width="50%" alt="">
 
 - Add timers to any text line as many as you wsh (count-up timing)
 - ▶️/⏸️ Supports start, pause, and continue timing, with multi-segment timing accumulation for a single task
@@ -19,14 +19,14 @@ A text block timing tool designed for Obsidian, allowing you to add timing funct
 
 1. Assign a shortcut for the command "Text Block Timer: Toggle timer" for quick access
 2. Place your cursor on a text block, press the shortcut to start, pause, or continue
-   `<img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="50%" alt="">`
+   <img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="50%" alt="">
 
 ### (2) Mouse Operations
 
 1. Right-click on a text line
 2. Select "Start Timer", "Pause Timer", or "Continue Timer"
 3. The timer will display in the format `【⏳00:00:00 】` at the start of the text block
-   `<img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="50%" alt="">`
+   <img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="50%" alt="">
 
 ## Notes
 
