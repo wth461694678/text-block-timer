@@ -15,6 +15,8 @@ A text block timing tool designed for Obsidian, allowing you to add timing funct
 
 ## Usage Method
 
+[Strongly Recommended] Write your task first before adding a timer!
+
 ### (1) Command Palette + Shortcuts (Recommended ⭐️)
 
 1. Assign a shortcut for the command "Text Block Timer: Toggle timer" for quick access
@@ -32,6 +34,13 @@ A text block timing tool designed for Obsidian, allowing you to add timing funct
 
 - It is recommended to keep the file (containing a running tiemr) open; otherwise, the real-time second updates of the timer may fail.
 - However, the file will record the timer state, which can be manually resumed.
+
+## Changelog:
+- V1.0.1
+   1. A space is added before the time tag to better distinguish it from your content.
+   2. Fixed the issue where adding a timer disrupted the structure of checkboxes in Markdown.
+- V1.0.0
+   1. Plugin release
 
 ## Development Information
 
