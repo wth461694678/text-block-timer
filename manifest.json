@@ -4,6 +4,6 @@
     "minAppVersion": "1.8.9",
     "name": "Text Block Timer",
     "author": "frankthwang",
-    "description": "Add a timer to text block to track task time consumption.",
+    "description": "Add a timer to text block to enable count-up timing.",
     "isDesktopOnly": true
 }
