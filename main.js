@@ -71,6 +71,39 @@ class TimerPlugin extends obsidian.Plugin {
         // Stores context for each timerId: { editor, lineNum }
         this.timerContexts = new Map();
 
+        // 获取当前界面语言
+        const currentLanguage = window.localStorage.getItem('language');
+        console.log('Current Obsidian Interface Language:', currentLanguage);
+
+        if (currentLanguage === 'zh') {
+            this.command_name = '启动计时器/切换计时器状态';
+            this.action_paused = '暂停计时';
+            this.action_continue = '继续计时';
+            this.action_start = '开始计时';
+        } else if (currentLanguage === 'zh-TW') {
+            this.command_name = '啟動計時器/切換計時器狀態';
+            this.action_paused = '暫停計時';
+            this.action_continue = '繼續計時';
+            this.action_start = '開始計時';
+        } else if (currentLanguage === 'ja') {
+            this.command_name = 'タイマーを始める/切替タイマ';
+            this.action_paused = 'タイマーを止める';
+            this.action_continue = 'タイマーを続ける';
+            this.action_start = 'タイマーを始める';
+        } else if (currentLanguage === 'ko') {
+            this.command_name = '타이머 전환';
+            this.action_paused = '타이머 일시 정지';
+            this.action_continue = '타이머 계속';
+            this.action_start = '타이머 시작';
+        } else {
+            this.command_name = 'toggle-timer';
+            this.action_paused = 'Pause Timer';
+            this.action_continue = 'Continue Timer';
+            this.action_start = 'Start Timer';
+        }
+
+
+
         // Add to editor context menu
         this.registerEvent(
             this.app.workspace.on('editor-menu', this.onEditorMenu.bind(this))
@@ -79,7 +112,7 @@ class TimerPlugin extends obsidian.Plugin {
         // Register "Toggle timer" command
         this.addCommand({
             id: 'toggle-timer',
-            name: 'Toggle timer',
+            name: this.command_name,
             editorCallback: (editor, view) => {
                 const cursor = editor.getCursor();
                 const lineNum = cursor.line;
@@ -116,21 +149,21 @@ class TimerPlugin extends obsidian.Plugin {
         if (status === 'Running') {
             menu.addItem((item) =>
                 item
-                .setTitle('暂停计时')
+                .setTitle(this.action_paused)
                 .setIcon('pause')
                 .onClick(() => this.handlePause(parsed, editor, lineNum))
             );
         } else if (status === 'Paused') {
             menu.addItem((item) =>
                 item
-                .setTitle('继续计时')
+                .setTitle(this.action_continue)
                 .setIcon('play')
                 .onClick(() => this.handleContinue(parsed, editor, lineNum))
             );
         } else {
             menu.addItem((item) =>
                 item
-                .setTitle('开始计时')
+                .setTitle(this.action_start)
                 .setIcon('play')
                 .onClick(() => this.handleStart(editor, lineNum))
             );
