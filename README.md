@@ -38,7 +38,7 @@ A text block timing tool designed for Obsidian, allowing you to add **count-up**
 ## Changelog:
 
 - V1.0.2
-  - Add language support for English, Chinese, Japanese and Korean.
+  1. Add language support for English, Chinese, Japanese and Korean.
 - V1.0.1
   1. A space is added before the time tag to better distinguish it from your content.
   2. Fixed the issue where adding a timer disrupted the structure of checkboxes in Markdown.
