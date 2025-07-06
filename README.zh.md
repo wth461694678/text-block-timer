@@ -22,13 +22,13 @@
 1. 为命令 "Text Block Timer: Toggle timer" 配置快捷键，方便快速使用
 2. 当光标在某个文本块时，按下快捷键，即可实现timer的开始、暂停、继续操作
 3. 计时器会以 `【⏳00:00:00 】`格式显示在文本块的行首
-   `<img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="50%" alt="">`
+   <img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="50%" alt="">
 
 ### （二）鼠标操作
 
 1. 在文本行上右键点击
 2. 选择"开始计时"、"暂停计时"或"继续计时"
-   `<img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="50%" alt="">`
+   <img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="50%" alt="">
 
 ## 注意事项
 
@@ -36,12 +36,12 @@
 
 ## 版本日志：
 
-- #1.0.2
+- V1.0.2
   1. 增加了对中文、英文、日语、韩语的语言支持
-- #1.0.1
+- V1.0.1
   1. 优化展示效果，在时间标签前添加了一个空格。
   2. 解决了在任务清单中添加计时器，导致任务勾选框失效的问题。
-- #1.0.0
+- V1.0.0
   1. 插件发布
 
 ## 开发信息
