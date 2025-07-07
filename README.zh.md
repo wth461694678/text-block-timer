@@ -38,20 +38,24 @@
 
 #### 1.1 从不停止，除非用户手动停止 
 用户关闭文件、退出Obsidian后，计时器依然会“后台计时”，在下次打开文件时，会讲关闭期间的耗时计入计时器耗时，并自动恢复计时。
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_never.gif" width="80%" alt="">
+
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_never.gif" width="100%" alt="">
 
 #### 1.2 仅退出Obsidian时停止，关闭文件依然后台计时（推荐，默认选项）
 用户关闭文件后，计时器依然会“后台计时”，在下次打开文件时，会讲关闭期间的耗时计入计时器耗时，并自动恢复计时。
 然而，用户退出Obsidian后，所有计时器会立即停止，防止用户忘记手动关闭计时器导致数据产生重大误差。
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_quit.gif" width="80%" alt="">
+
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_quit.gif" width="100%" alt="">
 
 #### 1.3 关闭文件时立即停止
 用户关闭文件后，所有计时器会立即停止，但在误关文件时，可能导致计时暂停。
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_close.gif" width="80%" alt="">
+
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_close.gif" width="100%" alt="">
 
 ### 2. 插入位置
 用户可以选择在文本块的前面或后面插入计时器标签。
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/insert_position.png" width="80%" alt="">
+
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/insert_position.png" width="100%" alt="">
 
 ## 版本日志：
 
