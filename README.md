@@ -14,7 +14,7 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 
 ## Usage
 
-### (I) Command Palette + Shortcut (Recommended⭐️)
+### 1. Command Palette + Shortcut (Recommended⭐️)
 
 1. Configure a shortcut for the command "Text Block Timer: Toggle timer" for quick access.
 2. When the cursor is on a text block, press the shortcut key to start, pause, or resume.
@@ -22,12 +22,33 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 
 ![Command Shortcut](https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif)
 
-### (II) Mouse Operations
+### 2. Mouse Operations
 
 1. Right-click on a text line.
 2. Select "Start Timer," "Pause Timer," or "Resume Timer."
 
 ![Right Click](https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif)
+
+## Custom Settings
+
+Users can customize the following options in the plugin Settings:
+
+### 1. Whether to continue timing after the file or Obsidian closed
+Users can freely choose whether to continue the timing after closing the file or disabling Obsidian.
+
+#### 1.1 never stops unless the user stops manually
+After a user closes a file or exits Obsidian, the timer will still "time in the background". When the file is opened next time, the time spent during the closure period will be counted as the timer time and the timing will automatically resume.
+
+#### 1.2 auto-stop only when exiting Obsidian. Background timing continues when closing files (recommended, default option)
+After the user closes a file, the timer will still "time in the background". When the file is opened next time, the time spent during the closing period will be counted as the timer time and the timing will automatically resume.
+However, once the user exits Obsidian, all timers will stop immediately to prevent significant data errors caused by the user forgetting to manually close the timers.
+
+#### 1.3 auto-stop immediately when closing a file
+After the user closes a file, all timers will stop immediately. However, if a file is closed by mistake, it may cause the timer to pause.
+
+### 2. Timer insert position
+Users can choose to insert a timer label either before or after the text block.
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/insert_position.png" width="80%" alt="">
 
 ## Version Log:
 
