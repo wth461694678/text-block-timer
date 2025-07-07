@@ -1,4 +1,4 @@
-[English](README.md) | [中文](README.zh.md)
+[English](https://github.com/wth461694678/text-block-timer/blob/main/README.md) | [中文](https://github.com/wth461694678/text-block-timer/blob/main/README.zh.md)
 
 # 文本块计时器插件
 
@@ -6,36 +6,35 @@
 
 ## 功能特性
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo.gif" width="50%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo.gif" width="100%" alt="">
 
 - 为任意文本行添加计时器，支持同时执行多个计时器（正计时）
-- ▶️/⏸️ 支持开始、暂停、继续计时，支持一个任务的多段计时累计
+- ▶️/⏸️ 支持开始、暂停、继续计时，支持任务分段耗时累计
 - ⏳ 实时显示累计时间
 - 💾 计时数据持久化保存
+- 🔄 可自由选择关闭文件、关闭Obsidian后是否持续计时 （默认设置下，关闭文件不会导致实时计时失效）
 
 ## 使用方法
-
-【强烈推荐】先撰写文本，再添加Timer为你的任务即计时！！
 
 ### （一）命令行+快捷键（推荐⭐️）
 
 1. 为命令 "Text Block Timer: Toggle timer" 配置快捷键，方便快速使用
 2. 当光标在某个文本块时，按下快捷键，即可实现timer的开始、暂停、继续操作
 3. 计时器会以 `【⏳00:00:00 】`格式显示在文本块的行首
-   <img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="50%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="80%" alt="">
 
 ### （二）鼠标操作
 
 1. 在文本行上右键点击
 2. 选择"开始计时"、"暂停计时"或"继续计时"
-   <img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="50%" alt="">
-
-## 注意事项
-
-- 建议保持文本块所在文件打开，否则会导致计时器的实时跳秒失效。但文件会保留计时器状态，下次打开文件时可以手动恢复计时。
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="80%" alt="">
 
 ## 版本日志：
 
+- V1.0.3
+  1. ==重大优化==：现在关闭文件不会导致计时器失效，用户可自由选择关闭文件或关闭Obsidian后是否持续计时（见自定义设置）
+  2. 增加自定义设置：现在用户可自由选择插入文本块位置（文本前或文本后）
+  3. 优化对Markdown的处理逻辑，增加对有序复选框、标题的支持
 - V1.0.2
   1. 增加了对中文、英文、日语、韩语的语言支持
 - V1.0.1
@@ -47,4 +46,4 @@
 ## 开发信息
 
 - 开发者: frankthwang
-- 版本: 1.0.2
+- 版本: 1.0.3

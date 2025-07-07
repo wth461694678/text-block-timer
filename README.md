@@ -1,51 +1,49 @@
-[English](README.md) | [中文](README.zh.md)
-
 # Text Block Timer Plugin
 
-A text block timing tool designed for Obsidian, allowing you to add **count-up** timing functionality to any text line in your notes.
+A text block timing tool designed for Obsidian, allowing you to add a **count-up stopwatch** function to any text line in your notes.
 
 ## Features
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo.gif" width="75%" alt="">
+![Demo](https://github.com/wth461694678/text-block-timer/blob/main/demo.gif)
 
-- Add timers to any text line as many as you wsh (count-up timing)
-- ▶️/⏸️ Supports start, pause, and continue timing, with multi-segment timing accumulation for a single task
-- ⏳ Real-time display of accumulated time
-- [💾](https://www.emojiall.com/zh-hans/emoji/%F0%9F%92%BE) Timing data is persistently saved
+- Add timers to any text line, supporting multiple timers running simultaneously (stopwatch function).
+- ▶️/⏸️ Start, pause, and resume timing for tasks.
+- ⏳ Real-time display of cumulative time cost.
+- 💾 Persistent storage of timing data.
+- 🔄 Users can optionally choose whether to continue timing when files or Obsidian is closed (by default, closing a file will not cause failure of the real-time stopwatch).
 
-## Usage Method
+## Usage
 
-[Strongly Recommended] Write your task first before adding a timer!
+### (I) Command Palette + Shortcut (Recommended⭐️)
 
-### (1) Command Palette + Shortcuts (Recommended ⭐️)
+1. Configure a shortcut for the command "Text Block Timer: Toggle timer" for quick access.
+2. When the cursor is on a text block, press the shortcut key to start, pause, or resume.
+3. The timer will be displayed in the format `【⏳00:00:00 】` at the beginning of the text line.
 
-1. Assign a shortcut for the command "Text Block Timer: Toggle timer" for quick access
-2. Place your cursor on a text block, press the shortcut to start, pause, or continue
-   <img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="75%" alt="">
+![Command Shortcut](https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif)
 
-### (2) Mouse Operations
+### (II) Mouse Operations
 
-1. Right-click on a text line
-2. Select "Start Timer", "Pause Timer", or "Continue Timer"
-3. The timer will display in the format `【⏳00:00:00 】` at the start of the text block
-   <img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="75%" alt="">
+1. Right-click on a text line.
+2. Select "Start Timer," "Pause Timer," or "Resume Timer."
 
-## Notes
+![Right Click](https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif)
 
-- It is recommended to keep the file (containing a running tiemr) open; otherwise, the real-time second updates of the timer may fail.
-- However, the file will record the timer state, which can be manually resumed.
+## Version Log:
 
-## Changelog:
-
+- V1.0.3
+  1. ==Major Optimization==: Closing a file no longer causes the timer to fail. Users can freely choose whether to continue timing when the or Obsidian is closed (see custom settings).
+  2. Added custom settings: Users can now choose the position to insert the timer (before or after texts).
+  3. Improve compatibility with markdown, adding support for ordered checkboxes and headings.
 - V1.0.2
-  1. Add language support for English, Chinese, Japanese and Korean.
+  1. Added language support for Chinese, English, Japanese, and Korean.
 - V1.0.1
-  1. A space is added before the time tag to better distinguish it from your content.
-  2. Fixed the issue where adding a timer disrupted the structure of checkboxes in Markdown.
+  1. Improved display effects by adding a space before the time label.
+  2. Fixed the issue where adding a timer to a task list caused the task checkbox to fail.
 - V1.0.0
   1. Plugin release
 
 ## Development Information
 
 - Developer: frankthwang
-- Version: 1.0.2
+- Version: 1.0.3
