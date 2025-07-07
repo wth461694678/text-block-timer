@@ -1,3 +1,5 @@
+[English](https://github.com/wth461694678/text-block-timer/blob/main/README.md) | [中文](https://github.com/wth461694678/text-block-timer/blob/main/README.zh.md)
+
 # Text Block Timer Plugin
 
 A text block timing tool designed for Obsidian, allowing you to add a **count-up stopwatch** function to any text line in your notes.
