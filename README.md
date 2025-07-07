@@ -38,16 +38,16 @@ Users can freely choose whether to continue the timing after closing the file or
 
 #### 1.1 never stops unless the user stops manually
 After a user closes a file or exits Obsidian, the timer will still "time in the background". When the file is opened next time, the time spent during the closure period will be counted as the timer time and the timing will automatically resume.
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_never.png" width="80%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_never.gif" width="80%" alt="">
 
 #### 1.2 auto-stop only when exiting Obsidian. Background timing continues when closing files (recommended, default option)
 After the user closes a file, the timer will still "time in the background". When the file is opened next time, the time spent during the closing period will be counted as the timer time and the timing will automatically resume.
 However, once the user exits Obsidian, all timers will stop immediately to prevent significant data errors caused by the user forgetting to manually close the timers.
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_quit.png" width="80%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_quit.gif" width="80%" alt="">
 
 #### 1.3 auto-stop immediately when closing a file
 After the user closes a file, all timers will stop immediately. However, if a file is closed by mistake, it may cause the timer to pause.
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_close.png" width="80%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_close.gif" width="80%" alt="">
 
 ### 2. Timer insert position
 Users can choose to insert a timer label either before or after the text block.
