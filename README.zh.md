@@ -6,7 +6,7 @@
 
 ## 功能特性
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo.gif" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/demo.gif" width="100%" alt="">
 
 - 为任意文本行添加计时器，支持同时执行多个计时器（正计时）
 - ▶️/⏸️ 支持开始、暂停、继续计时，支持任务分段耗时累计
@@ -21,13 +21,13 @@
 1. 为命令 "Text Block Timer: Toggle timer" 配置快捷键，方便快速使用
 2. 当光标在某个文本块时，按下快捷键，即可实现timer的开始、暂停、继续操作
 3. 计时器会以 `【⏳00:00:00 】`格式显示在文本块的行首
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/command_shortcut.gif" width="80%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/command_shortcut.gif" width="80%" alt="">
 
 ### 2. 鼠标操作
 
 1. 在文本行上右键点击
 2. 选择"开始计时"、"暂停计时"或"继续计时"
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/right_click.gif" width="80%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/right_click.gif" width="80%" alt="">
 
 ## 自定义设置
 
@@ -39,23 +39,23 @@
 #### 1.1 从不停止，除非用户手动停止 
 用户关闭文件、退出Obsidian后，计时器依然会“后台计时”，在下次打开文件时，会讲关闭期间的耗时计入计时器耗时，并自动恢复计时。
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_never.gif" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_never.gif" width="100%" alt="">
 
 #### 1.2 仅退出Obsidian时停止，关闭文件依然后台计时（推荐，默认选项）
 用户关闭文件后，计时器依然会“后台计时”，在下次打开文件时，会讲关闭期间的耗时计入计时器耗时，并自动恢复计时。
 然而，用户退出Obsidian后，所有计时器会立即停止，防止用户忘记手动关闭计时器导致数据产生重大误差。
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_quit.gif" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_quit.gif" width="100%" alt="">
 
 #### 1.3 关闭文件时立即停止
 用户关闭文件后，所有计时器会立即停止，但在误关文件时，可能导致计时暂停。
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/settings_close.gif" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_close.gif" width="100%" alt="">
 
 ### 2. 插入位置
 用户可以选择在文本块的前面或后面插入计时器标签。
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/insert_position.png" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/insert_position.png" width="100%" alt="">
 
 ## 版本日志：
 

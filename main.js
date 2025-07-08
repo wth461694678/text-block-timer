@@ -62,7 +62,7 @@ class TimerManager {
         if (this.timers.has(timerId)) return;
         const id = setInterval(() => tickCallback(timerId), UPDATE_INTERVAL);
         this.timers.set(timerId, id);
-        console.log('start timerId:', timerId);
+        // console.log('start timerId:', timerId);
     }
 
     stop(timerId) {
@@ -70,7 +70,7 @@ class TimerManager {
         if (id) {
             clearInterval(id);
             this.timers.delete(timerId);
-            console.log('stop timerId:', timerId);
+            // console.log('stop timerId:', timerId);
         }
     }
 
@@ -463,27 +463,27 @@ class TimerPlugin extends obsidian.Plugin {
             if (olcheckboxLen > 0) {
                 var textleft
                 textleft = lineText.slice(olcheckboxLen);
-                console.log('textleft after olcheckbox:', textleft);
+                // console.log('textleft after olcheckbox:', textleft);
                 before = after = olcheckboxLen;
             } else if (ulcheckboxLen > 0) {
                 var textleft
                 textleft = lineText.slice(ulcheckboxLen);
-                console.log('textleft after checkbox:', textleft);
+                // console.log('textleft after checkbox:', textleft);
                 before = after = ulcheckboxLen;
             } else if (orderedListLen > 0) {
                 var textleft
                 textleft = lineText.slice(orderedListLen);
-                console.log('textleft after ol:', textleft);
+                // console.log('textleft after ol:', textleft);
                 before = after = orderedListLen;
             } else if (ulLen > 0) {
                 var textleft
                 textleft = lineText.slice(ulLen);
-                console.log('textleft after ul:', textleft);
+                // console.log('textleft after ul:', textleft);
                 before = after = ulLen;
             } else if (headerLen > 0) {
                 var textleft
                 textleft = lineText.slice(headerLen);
-                console.log('textleft after header:', textleft);
+                // console.log('textleft after header:', textleft);
                 before = after = headerLen;
             } else {
                 before = after = 0;
@@ -497,7 +497,7 @@ class TimerPlugin extends obsidian.Plugin {
         editor.replaceRange(
             newSpan, { line: lineNum, ch: before }, { line: lineNum, ch: after }
         );
-        console.log('lineNum:', lineNum, 'before:', before, 'after:', after);
+        // console.log('lineNum:', lineNum, 'before:', before, 'after:', after);
         return data.timerId;
     }
 
@@ -553,7 +553,7 @@ class TimerPlugin extends obsidian.Plugin {
                     this.handleRestore(parsed, editor, i);
                 } else if (this.settings.autoStopTimers === 'quit') {
                     // 对于状态为Running且timerId不在this.manager中的计时器，如果计时器的本次启动时间 等于 当前插件启动时间，则继续，否则强行暂停
-                    console.log('PLT:', parsed.PLT, 'pluginLoadTime:', this.pluginLoadTime);
+                    // console.log('PLT:', parsed.PLT, 'pluginLoadTime:', this.pluginLoadTime);
                     if (parsed.PLT === this.pluginLoadTime) {
                         this.handleRestore(parsed, editor, i);
                     } else {
