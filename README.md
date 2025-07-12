@@ -13,8 +13,9 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 - ⏳ Real-time display of cumulative time cost.
 - 💾 Persistent storage of timing data.
 - 🔄 Users can optionally choose whether to continue timing when files or Obsidian is closed (by default, closing a file will not cause failure of the real-time stopwatch).
+- By modifying the task status, you can automatically trigger the start and update of the timer
 
-## Usage
+## How to use
 
 ### 1. Command Palette + Shortcut (Recommended⭐️)
 
@@ -24,12 +25,21 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 
 ![Command Shortcut](https://github.com/wth461694678/text-block-timer/blob/main/demo/command_shortcut.gif)
 
-### 2. Mouse Operations
+### 2. Mouse Operations (Not Recommended)
 
 1. Right-click on a text line.
 2. Select "Start Timer," "Pause Timer," or "Resume Timer."
 
 ![Right Click](https://github.com/wth461694678/text-block-timer/blob/main/demo/right_click.gif)
+
+### 3. Control Timer by Task Status Automatically (Recommended⭐️)
+
+1. For For Common Users, you can directly change the task status [ ] to trigger the start and update of the timer (Suits for everyone, however not convenient enough, especially for Windows users.)
+2. ⭐️For `Task Plugin` Users, you can trigger the start and update of timers by simply clicking the checkbox (Convenient but needs pre-settings)
+
+![controlbycheckbox](https://github.com/wth461694678/text-block-timer/blob/main/demo/controlbycheckbox.gif)
+
+
 
 ## Custom Settings
 
@@ -58,8 +68,25 @@ After the user closes a file, all timers will stop immediately. However, if a fi
 Users can choose to insert a timer label either before or after the text block.
 <img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/insert_position.png" width="100%" alt="">
 
+
+### 3. Control Timer by Task Status Automatically - Path Control
+
+In the default settings, path control is disabled. When you only want to use the timer in specific folders, you can use a whitelist or blacklist to control it, which will only take effect in one of the two ways.
+
+- Disable path control：this feature can always take place
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.png" width="100%" alt="">
+
+- Whitelist：only folders in the whitelist will work
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.png" width="100%" alt="">
+
+- Blacklist：folders in the blacklist will not work
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.png" width="100%" alt="">
+
 ## Version Log:
 
+- V1.0.4
+  1. ==Major Feature==：Now you can control the timer switch by the checkbox in the task front.
+  2. Improve the function of creating timers, now it will not directly expose the span's source code
 - V1.0.3
   1. ==Major Optimization==: Closing a file no longer causes the timer to fail. Users can freely choose whether to continue timing when the or Obsidian is closed (see custom settings).
   2. Added custom settings: Users can now choose the position to insert the timer (before or after texts).
@@ -75,4 +102,4 @@ Users can choose to insert a timer label either before or after the text block.
 ## Development Information
 
 - Developer: frankthwang
-- Version: 1.0.3
+- Version: 1.0.4
