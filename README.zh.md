@@ -79,13 +79,13 @@
 在默认设置下，路径控制是关闭的。当你只希望在部分文件夹下使用该功能，你可以通过白名单或黑名单的方式进行控制，这两种方式只会生效其中一种。
 
 - 不控制：所有文件夹下都可以使用该功能
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.png" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.gif" width="100%" alt="">
 
 - 白名单：只有在白名单中的文件夹下，才会生效
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.png" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.gif" width="100%" alt="">
 
 - 黑名单：在黑名单中的文件夹下，不会生效
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.png" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif" width="100%" alt="">
 
 
 
