@@ -74,13 +74,13 @@ Users can choose to insert a timer label either before or after the text block.
 In the default settings, path control is disabled. When you only want to use the timer in specific folders, you can use a whitelist or blacklist to control it, which will only take effect in one of the two ways.
 
 - Disable path control：this feature can always take place
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.png" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.gif" width="100%" alt="">
 
 - Whitelist：only folders in the whitelist will work
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.png" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.gif" width="100%" alt="">
 
 - Blacklist：folders in the blacklist will not work
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.png" width="100%" alt="">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif" width="100%" alt="">
 
 ## Version Log:
 
