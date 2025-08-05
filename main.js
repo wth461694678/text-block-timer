@@ -1007,7 +1007,9 @@ class TimerPlugin extends obsidian.Plugin {
                     const beforeLines = view.data.split('\n');
 
                     const handlePointerUp = () => {
-                        console.log('pointerup');
+                        if (DEBUG) {
+                            console.log('pointerup');
+                        }
                         document.removeEventListener('pointerup', handlePointerUp);
 
                         let count = 0;
@@ -1039,11 +1041,15 @@ class TimerPlugin extends obsidian.Plugin {
                                 }
                             }
                             if (found) {
-                                console.log('找到变化');
+                                if (DEBUG) {
+                                    console.log('找到变化');
+                                }
                                 clearInterval(id);
                             }
                             if (count === max) {
-                                console.log('次数达到上限，未找到变化，停止监听');
+                                if (DEBUG) {
+                                    console.log('次数达到上限，未找到变化，停止监听');
+                                }
                                 clearInterval(id);
                             }
                         }, 100);
