@@ -84,17 +84,17 @@ In the default settings, path control is disabled. When you only want to use the
 
 ## Version Log:
 - V1.0.5
-  1. ==Major Feature==: This plugin now supports usage on the Mobile end!
-  2. ==Major Optimization==: Added support for **read-only mode**, now the timer can be updated in real time and data can be persisted even in read-only mode.
-  3. ==Major Feature==: Added a timer deletion function, which can be accessed through the command line or right-click menu.
-  4. **Slimming Plan for Timer Blocks a Huge Success!**: The length of Timer blocks has been significantly reduced by 60% in version V1.0.5.
+  1. **==Major Feature==**: This plugin now supports usage on the Mobile end!
+  2. **==Major Optimization==**: Added support for **read-only mode**, now the timer can be updated in real time and data can be persisted even in read-only mode.
+  3. **==Major Feature==**: Added a timer deletion function, which can be accessed through the command line or right-click menu.
+  4. **Slimming Plan for Timer Blocks**: The length of Timer blocks has been significantly reduced by 60% in version V1.0.5.
   5. Bug Fix: Fixed the issue where time display was incorrect after exceeding 24 hours.
 
 - V1.0.4
-  1. ==Major Feature==：Now you can control the timer switch by the checkbox in the task front.
+  1. **==Major Feature==**: Now you can control the timer switch by the checkbox in the task front.
   2. Improve the function of creating timers, now it will not directly expose the span's source code
 - V1.0.3
-  1. ==Major Optimization==: Closing a file no longer causes the timer to fail. Users can freely choose whether to continue timing when the or Obsidian is closed (see custom settings).
+  1. **==Major Optimization==**: Closing a file no longer causes the timer to fail. Users can freely choose whether to continue timing when the or Obsidian is closed (see custom settings).
   2. Added custom settings: Users can now choose the position to insert the timer (before or after texts).
   3. Improve compatibility with markdown, adding support for ordered checkboxes and headings.
 - V1.0.2
