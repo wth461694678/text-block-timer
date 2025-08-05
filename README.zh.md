@@ -20,7 +20,7 @@
 ### 1. 命令行+快捷键（推荐⭐️）
 
 1. 为命令 "Text Block Timer: Toggle timer" 配置快捷键，方便快速使用
-2. 当光标在某个文本块时，按下快捷键，即可实现timer的开始、暂停、继续操作
+2. 当光标在某个文本块时，按下快捷键，即可实现timer的开始、暂停、继续、删除操作
 3. 计时器会以 `【⏳00:00:00 】`格式显示在文本块的行首
 
 ![Command Shortcut](https://github.com/wth461694678/text-block-timer/blob/main/demo/command_shortcut.gif)
@@ -28,7 +28,7 @@
 ### 2. 鼠标操作（不推荐）
 
 1. 在文本行上右键点击
-2. 选择"开始计时"、"暂停计时"或"继续计时"
+2. 选择"开始计时"、"暂停计时"、"继续计时"、"删除计时器"
 
 ![Right Click](https://github.com/wth461694678/text-block-timer/blob/main/demo/right_click.gif)
 
@@ -53,44 +53,50 @@
 
 用户关闭文件、退出Obsidian后，计时器依然会“后台计时”，在下次打开文件时，会讲关闭期间的耗时计入计时器耗时，并自动恢复计时。
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_never.gif" width="100%" alt="">
+![settings_never](https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_never.gif)
 
 #### 1.2 仅退出Obsidian时停止，关闭文件依然后台计时（推荐，默认选项）
 
 用户关闭文件后，计时器依然会“后台计时”，在下次打开文件时，会讲关闭期间的耗时计入计时器耗时，并自动恢复计时。
 然而，用户退出Obsidian后，所有计时器会立即停止，防止用户忘记手动关闭计时器导致数据产生重大误差。
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_quit.gif" width="100%" alt="">
+![settings_quit](https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_quit.gif)
 
 #### 1.3 关闭文件时立即停止
 
 用户关闭文件后，所有计时器会立即停止，但在误关文件时，可能导致计时暂停。
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_close.gif" width="100%" alt="">
+![settings_close](https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_close.gif)
 
 ### 2. 插入位置
 
 用户可以选择在文本块的前面或后面插入计时器标签。对于Day Planner用户而言，推荐插入在文本块后面。
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/insert_position.png" width="100%" alt="">
+![insert_position](https://github.com/wth461694678/text-block-timer/blob/main/demo/insert_position.png)
 
 ### 3. 通过任务状态自动控制计时器 - 路径控制
 
 在默认设置下，路径控制是关闭的。当你只希望在部分文件夹下使用该功能，你可以通过白名单或黑名单的方式进行控制，这两种方式只会生效其中一种。
 
 - 不控制：所有文件夹下都可以使用该功能
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.gif" width="100%" alt="">
+![pathControl_no](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.gif)
 
 - 白名单：只有在白名单中的文件夹下，才会生效
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.gif" width="100%" alt="">
+![pathControl_white](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.gif)
 
 - 黑名单：在黑名单中的文件夹下，不会生效
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif" width="100%" alt="">
+![pathControl_black](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif)
 
 
 
 
 ## 版本日志：
+- V1.0.5
+  1. ==重大功能==：该插件现在已经支持Mobile端使用！
+  2. ==重大优化==：增加**只读模式**支持，现在只读模式也可实时更新计时器并持久化数据
+  3. ==重大功能==：增加了删除计时器功能，删除计时器可通过命令行或右键菜单使用
+  4. **Timer块瘦身计划大成功！**：V1.0.5版本Timer块长度大幅削减60%
+  5. BUG修复：修复了计时超过24小时后时间展示不正确问题
 
 - V1.0.4
   1. ==重大功能==：现在你可以通过任务前的 [ ] 勾选框来控制计时器的开关
@@ -110,4 +116,4 @@
 ## 开发信息
 
 - 开发者: frankthwang
-- 版本: 1.0.4
+- 版本: 1.0.5

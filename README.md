@@ -20,7 +20,7 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 ### 1. Command Palette + Shortcut (Recommended⭐️)
 
 1. Configure a shortcut for the command "Text Block Timer: Toggle timer" for quick access.
-2. When the cursor is on a text block, press the shortcut key to start, pause, or resume.
+2. When the cursor is on a text block, press the shortcut key to start, pause, resume, or delete the timer.
 3. The timer will be displayed in the format `【⏳00:00:00 】` at the beginning of the text line.
 
 ![Command Shortcut](https://github.com/wth461694678/text-block-timer/blob/main/demo/command_shortcut.gif)
@@ -28,7 +28,7 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 ### 2. Mouse Operations (Not Recommended)
 
 1. Right-click on a text line.
-2. Select "Start Timer," "Pause Timer," or "Resume Timer."
+2. Select "Start Timer", "Pause Timer", "Resume Timer", or "Delete Timer".
 
 ![Right Click](https://github.com/wth461694678/text-block-timer/blob/main/demo/right_click.gif)
 
@@ -39,50 +39,56 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 
 ![controlbycheckbox](https://github.com/wth461694678/text-block-timer/blob/main/demo/controlbycheckbox.gif)
 
-
-
 ## Custom Settings
 
 Users can customize the following options in the plugin Settings:
 
 ### 1. Whether to continue timing after the file or Obsidian closed
+
 Users can freely choose whether to continue the timing after closing the file or disabling Obsidian.
 
 #### 1.1 never stops unless the user stops manually
+
 After a user closes a file or exits Obsidian, the timer will still "time in the background". When the file is opened next time, the time spent during the closure period will be counted as the timer time and the timing will automatically resume.
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_never.gif" width="100%" alt="">
+![settings_never](https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_never.gif)
 
 #### 1.2 auto-stop only when exiting Obsidian. Background timing continues when closing files (recommended, default option)
+
 After the user closes a file, the timer will still "time in the background". When the file is opened next time, the time spent during the closing period will be counted as the timer time and the timing will automatically resume.
 However, once the user exits Obsidian, all timers will stop immediately to prevent significant data errors caused by the user forgetting to manually close the timers.
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_quit.gif" width="100%" alt="">
+![settings_quit](https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_quit.gif)
 
 #### 1.3 auto-stop immediately when closing a file
+
 After the user closes a file, all timers will stop immediately. However, if a file is closed by mistake, it may cause the timer to pause.
 
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_close.gif" width="100%" alt="">
+![settings_close](https://github.com/wth461694678/text-block-timer/blob/main/demo/settings_close.gif)
 
 ### 2. Timer insert position
-Users can choose to insert a timer label either before or after the text block.
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/insert_position.png" width="100%" alt="">
 
+Users can choose to insert a timer label either before or after the text block.
+![insert_position](https://github.com/wth461694678/text-block-timer/blob/main/demo/insert_position.png)
 
 ### 3. Control Timer by Task Status Automatically - Path Control
 
 In the default settings, path control is disabled. When you only want to use the timer in specific folders, you can use a whitelist or blacklist to control it, which will only take effect in one of the two ways.
 
 - Disable path control：this feature can always take place
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.gif" width="100%" alt="">
-
+  ![pathControl_no](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.gif)
 - Whitelist：only folders in the whitelist will work
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.gif" width="100%" alt="">
-
+  ![pathControl_white](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.gif)
 - Blacklist：folders in the blacklist will not work
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif" width="100%" alt="">
+  ![pathControl_black](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif)
 
 ## Version Log:
+- V1.0.5
+  1. ==Major Feature==: This plugin now supports usage on the Mobile end!
+  2. ==Major Optimization==: Added support for **read-only mode**, now the timer can be updated in real time and data can be persisted even in read-only mode.
+  3. ==Major Feature==: Added a timer deletion function, which can be accessed through the command line or right-click menu.
+  4. **Slimming Plan for Timer Blocks a Huge Success!**: The length of Timer blocks has been significantly reduced by 60% in version V1.0.5.
+  5. Bug Fix: Fixed the issue where time display was incorrect after exceeding 24 hours.
 
 - V1.0.4
   1. ==Major Feature==：Now you can control the timer switch by the checkbox in the task front.
@@ -102,4 +108,4 @@ In the default settings, path control is disabled. When you only want to use the
 ## Development Information
 
 - Developer: frankthwang
-- Version: 1.0.4
+- Version: 1.0.5
