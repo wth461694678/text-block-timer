@@ -381,8 +381,8 @@ const TRANSLATIONS = {
 
 // Helper function to get translation
 function getTranslation(key) {
-    const currentLanguage = window.localStorage.getItem('language').replace('-', '') || 'en';
-    const lang = TRANSLATIONS[currentLanguage] || TRANSLATIONS.en;
+    const currentLanguage = window.localStorage.getItem('language') || 'en';
+    const lang = TRANSLATIONS[currentLanguage.replace('zh-TW', 'zhTW')] || TRANSLATIONS.en;
     return lang[key] || TRANSLATIONS.en[key] || key;
 }
 
@@ -915,7 +915,7 @@ class TimerPlugin extends obsidian.Plugin {
         // Register "Toggle timer" command
         this.addCommand({
             id: 'toggle-timer',
-            icon: 'alarm-clock',
+            icon: 'timer',
             name: getTranslation('command_name').toggle,
             editorCallback: (editor, view) => {
                 const cursor = editor.getCursor();
@@ -942,7 +942,7 @@ class TimerPlugin extends obsidian.Plugin {
         // Register "Toggle timer" command
         this.addCommand({
             id: 'delete-timer',
-            icon: 'trash',
+            icon: 'timer-off',
             name: getTranslation('command_name').delete,
             editorCallback: (editor, view) => {
                 const cursor = editor.getCursor();
