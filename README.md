@@ -83,13 +83,14 @@ In the default settings, path control is disabled. When you only want to use the
   ![pathControl_black](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif)
 
 ## Version Log:
+- V1.0.6
+  1. BUG Fix: Resolved the issue of startup failure caused by incorrect language configuration code
 - V1.0.5
   1. **==Major Feature==**: This plugin now supports usage on the Mobile end!
   2. **==Major Optimization==**: Added support for **read-only mode**, now the timer can be updated in real time and data can be persisted even in read-only mode.
   3. **==Major Feature==**: Added a timer deletion function, which can be accessed through the command line or right-click menu.
   4. **Slimming Plan for Timer Blocks**: The length of Timer blocks has been significantly reduced by 60% in version V1.0.5.
   5. Bug Fix: Fixed the issue where time display was incorrect after exceeding 24 hours.
-
 - V1.0.4
   1. **==Major Feature==**: Now you can control the timer switch by the checkbox in the task front.
   2. Improve the function of creating timers, now it will not directly expose the span's source code
@@ -108,4 +109,4 @@ In the default settings, path control is disabled. When you only want to use the
 ## Development Information
 
 - Developer: frankthwang
-- Version: 1.0.5
+- Version: 1.0.6
