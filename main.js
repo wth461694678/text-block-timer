@@ -16,7 +16,237 @@ const CHECKBOX_REGEX = /^(?:(\s*)(?:[-+*]|\d+\.)\s+)\[(.{1})\]\s+/
 // —— Base62 工具函数 —— //
 const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const DEBUG = false;
+const DEBUG = true;
+
+// Performance monitor: lightweight sync/async timing collector
+class PerfMonitor {
+    constructor() {
+        this.enabled = false;
+        this.data = new Map(); // name -> { count, total }
+        this.sessionName = null;
+        this.startTime = 0;
+        this.endTime = 0;
+        // 调用间隔监控
+        this.intervalTracking = false;
+        this.intervals = new Map(); // methodName -> { lastCallTime, gaps: [] }
+    }
+
+    startSession() {
+        this.enabled = true;
+        this.startTime = Date.now();
+
+        // 输出简短的使用方法说明
+        console.log('[PerfMonitor] 使用方法:');
+        console.log('• PerfMonitorStart() - 开始监控');
+        console.log('• PerfMonitorStop() - 停止监控并查看报告');
+
+        // 自动包装核心类
+        PerfMonitor.wrapCoreClasses();
+    }
+
+    stopSession() {
+        this.enabled = false;
+        this.endTime = Date.now();
+        console.log(`[PerfMonitor] session stopped, duration ${this.endTime - this.startTime} ms`);
+        this.print();
+
+        // 自动重置数据（静默重置，不输出日志）
+        this.reset(true);
+    }
+
+    reset(silent = false) {
+        this.data.clear();
+        this.intervals.clear();
+        if (!silent) {
+            console.log('[PerfMonitor] reset');
+        }
+    }
+
+    // 启用调用间隔监控
+    enableIntervalTracking() {
+        this.intervalTracking = true;
+        console.log('[PerfMonitor] interval tracking enabled');
+    }
+
+    // 禁用调用间隔监控
+    disableIntervalTracking() {
+        this.intervalTracking = false;
+        console.log('[PerfMonitor] interval tracking disabled');
+    }
+
+    // 记录调用间隔
+    recordInterval(name) {
+        if (!this.intervalTracking) return;
+
+        const now = Date.now();
+        if (!this.intervals.has(name)) {
+            this.intervals.set(name, { lastCallTime: now, gaps: [] });
+            return;
+        }
+
+        const interval = this.intervals.get(name);
+        const gap = now - interval.lastCallTime;
+        interval.gaps.push(gap);
+        interval.lastCallTime = now;
+
+        // 检测异常间隔（超过5秒）
+        if (gap > 5000) {
+            console.warn(`[PerfMonitor] ${name} 异常间隔: ${gap}ms，可能是后台节流恢复`);
+        }
+    }
+
+    // 打印间隔统计
+    printIntervals() {
+        if (!this.intervalTracking) {
+            console.log('[PerfMonitor] interval tracking not enabled');
+            return;
+        }
+
+        console.group('[PerfMonitor] Interval Analysis');
+        this.intervals.forEach((data, name) => {
+            if (data.gaps.length === 0) {
+                console.log(`${name}: no intervals recorded`);
+                return;
+            }
+
+            const gaps = data.gaps;
+            const min = Math.min(...gaps);
+            const max = Math.max(...gaps);
+            const avg = Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length);
+            const abnormal = gaps.filter(g => g > 5000).length;
+
+            console.log(`${name}: ${gaps.length} intervals, min ${min}ms, max ${max}ms, avg ${avg}ms, abnormal(>5s) ${abnormal}`);
+        });
+        console.groupEnd();
+    }
+
+    record(name, ms) {
+        if (!this.data.has(name)) this.data.set(name, { count: 0, total: 0, max: 0 });
+        const v = this.data.get(name);
+        v.count += 1;
+        v.total += ms;
+        if (ms > v.max) v.max = ms;
+    }
+
+    // helper: time a synchronous function
+    timeSync(name, fn, ...args) {
+        const t0 = Date.now();
+        const res = fn(...args);
+        const t1 = Date.now();
+        this.record(name, t1 - t0);
+        return res;
+    }
+
+    // helper: time an async function (returns promise)
+    timeAsync(name, fn, ...args) {
+        const t0 = Date.now();
+        return Promise.resolve(fn(...args)).then((r) => {
+            this.record(name, Date.now() - t0);
+            return r;
+        });
+    }
+
+    print() {
+        const rows = Array.from(this.data.entries()).map(([k, v]) => ({ k, count: v.count, total: v.total, avg: Math.round(v.total / v.count), max: v.max }));
+        rows.sort((a, b) => b.total - a.total);
+        console.group('[PerfMonitor] Summary');
+        rows.forEach(r => console.log(`${r.k}: ${r.total}ms over ${r.count} calls (avg ${r.avg}ms, max ${r.max}ms)`));
+        console.groupEnd();
+    }
+
+    // wrap a method (object can be prototype or class/static object)
+    wrapMethod(object, methodName, displayName = null) {
+        if (!object) return;
+        const orig = object[methodName];
+        if (!orig || orig._perfmonitor_wrapped) return;
+        const name = displayName || `${object.constructor && object.constructor.name ? object.constructor.name : 'obj'}.${methodName}`;
+        const self = this;
+        object[methodName] = function(...args) {
+            if (!window.__PerfMonitor || !window.__PerfMonitor.enabled) return orig.apply(this, args);
+
+            // 记录调用间隔
+            self.recordInterval(name);
+
+            const t0 = Date.now();
+            try {
+                const res = orig.apply(this, args);
+                if (res && typeof res.then === 'function') {
+                    return res.then(r => {
+                        self.record(name, Date.now() - t0);
+                        return r;
+                    }).catch(e => {
+                        self.record(name, Date.now() - t0);
+                        throw e;
+                    });
+                } else {
+                    self.record(name, Date.now() - t0);
+                    return res;
+                }
+            } catch (err) {
+                self.record(name, Date.now() - t0);
+                throw err;
+            }
+        };
+        object[methodName]._perfmonitor_wrapped = true;
+    }
+
+    // convenience: wrap multiple methods on an object
+    wrapMethods(object, methodNames, prefix = '') {
+        for (const m of methodNames) this.wrapMethod(object, m, prefix ? `${prefix}.${m}` : m);
+    }
+
+    // 静态方法：初始化全局性能监控（仅在DEBUG模式下）
+    static initGlobalMonitor() {
+        if (!window.__PerfMonitor) {
+            window.__PerfMonitor = new PerfMonitor();
+
+            // 暴露简化的控制函数到全局
+            window.PerfMonitorStart = () => window.__PerfMonitor.startSession();
+            window.PerfMonitorStop = () => window.__PerfMonitor.stopSession();
+            window.PerfMonitorPrint = () => window.__PerfMonitor.print();
+
+            // 调用间隔监控控制
+            window.PerfMonitorIntervalStart = () => window.__PerfMonitor.enableIntervalTracking();
+            window.PerfMonitorIntervalStop = () => window.__PerfMonitor.disableIntervalTracking();
+            window.PerfMonitorIntervalPrint = () => window.__PerfMonitor.printIntervals();
+
+            console.log('[PerfMonitor] Debug mode enabled. Use PerfMonitorStart() to begin monitoring.');
+        }
+    }
+
+    // 静态方法：包装核心类
+    static wrapCoreClasses() {
+        if (!DEBUG || !window.__PerfMonitor) return;
+
+        try {
+            // TimerManager
+            if (typeof TimerManager !== 'undefined') {
+                window.__PerfMonitor.wrapMethods(TimerManager.prototype, ['startTimer', 'stopTimer', 'updateTimerData', 'getTimerData', 'hasTimer', 'clearAll'], 'TimerManager');
+            }
+            if (typeof TimerFileManager !== 'undefined') {
+                window.__PerfMonitor.wrapMethods(TimerFileManager.prototype, ['writeTimer', 'updateTimerByIdWithSearch', 'findTimerGlobally', 'calculateInsertPosition', 'upgradeOldTimers'], 'TimerFileManager');
+            }
+            if (typeof TimerParser !== 'undefined') {
+                window.__PerfMonitor.wrapMethods(TimerParser, ['parse', 'parseOldFormat', 'parseNewFormat'], 'TimerParser');
+            }
+            if (typeof TimerRenderer !== 'undefined') {
+                window.__PerfMonitor.wrapMethods(TimerRenderer, ['render'], 'TimerRenderer');
+            }
+            if (typeof TimerDataUpdater !== 'undefined') {
+                window.__PerfMonitor.wrapMethods(TimerDataUpdater, ['calculate'], 'TimerDataUpdater');
+            }
+
+            // TimerPlugin methods - wrap prototype methods after class is defined
+            if (typeof TimerPlugin !== 'undefined') {
+                window.__PerfMonitor.wrapMethods(TimerPlugin.prototype, ['onload', 'onunload', 'onEditorMenu', 'onFileOpen', 'restoreTimers', 'handleStart', 'handlePause', 'handleContinue', 'handleDelete', 'onTick'], 'TimerPlugin');
+            }
+
+            // console.log('[PerfMonitor] Core classes wrapped. Start session with PerfMonitorStart()');
+        } catch (e) {
+            console.error('[PerfMonitor] Wrap failed:', e);
+        }
+    }
+}
 
 function compressId(timestamp) {
     if (!timestamp) timestamp = Date.now();
@@ -114,7 +344,7 @@ const TRANSLATIONS = {
             desc: "配置计时器行为",
             tutorial: "更多图片和视频教程，请访问：",
             askforvote: "如果你喜欢这款插件，请为我的Github项目点个Star🌟",
-            issue: "如果有任何问题或建议，可以在Github项目中提出Issue，并注明使用的插件版本和复现步骤",
+            issue: "如果有任何问题或建议，可以在Github项目中提出Issue，并注明使用的插件版本和复现步骤，中国用户遇到阻断BUG可以直接联系微信Franklin_wth",
             sections: {
                 basic: { name: "通用设置" },
                 bycommand: {
@@ -458,6 +688,52 @@ class TimerManager {
     constructor() {
         this.timers = new Map(); // timerId -> { intervalId, data }
         this.startedIds = new Set(); // 记录本次onload以来所有启动过的timerId
+        this.runningTicks = new Set(); // 记录正在执行onTick的timerId，防止重叠执行
+
+        // 页面可见性监控
+        this.isVisible = !document.hidden;
+        this.lastVisibleTime = Date.now();
+        this.backgroundThreshold = 1000; // 1分钟 = 60000ms
+        this.setupVisibilityMonitor();
+    }
+
+    setupVisibilityMonitor() {
+        const handleVisibilityChange = () => {
+            this.isVisible = !document.hidden;
+            if (this.isVisible) {
+                this.lastVisibleTime = Date.now();
+                if (DEBUG) {
+                    console.log('[TimerManager] 页面回到前台');
+                }
+            } else {
+                if (DEBUG) {
+                    console.log('[TimerManager] 页面进入后台');
+                }
+            }
+        };
+
+        document.addEventListener('visibilitychange', handleVisibilityChange);
+
+        // 记录初始状态
+        if (this.isVisible) {
+            this.lastVisibleTime = Date.now();
+        }
+    }
+
+    // 检查是否应该跳过onTick（后台超过1分钟）
+    shouldSkipTick() {
+        if (this.isVisible) {
+            return false; // 前台时不跳过
+        }
+
+        const backgroundDuration = Date.now() - this.lastVisibleTime;
+        const shouldSkip = backgroundDuration > this.backgroundThreshold;
+
+        if (shouldSkip && DEBUG) {
+            console.log(`[TimerManager] 后台时间 ${Math.round(backgroundDuration/1000)}s，跳过onTick`);
+        }
+
+        return shouldSkip;
     }
 
     startTimer(timerId, initialData, tickCallback) {
@@ -528,6 +804,7 @@ class TimerManager {
         });
         this.timers.clear();
         this.startedIds.clear();
+        this.runningTicks.clear();
     }
 }
 
@@ -889,6 +1166,8 @@ class TimerParser {
 // —— Main plugin class —— //
 class TimerPlugin extends obsidian.Plugin {
     async onload() {
+        PerfMonitor.initGlobalMonitor();
+
         this.manager = new TimerManager();
         this.fileFirstOpen = true;
 
@@ -1222,20 +1501,43 @@ class TimerPlugin extends obsidian.Plugin {
     }
 
     async onTick(timerId) {
+        // 可见性检查：后台超过1分钟时跳过
+        if (this.manager.shouldSkipTick()) {
+            if (DEBUG) {
+                console.log(`页面后台超过1分钟，跳过 onTick: ${timerId}`);
+            }
+            return;
+        }
 
-        // 1. Get and update data
-        const oldData = this.manager.getTimerData(timerId);
-        if (!oldData || oldData.class !== 'timer-r') return;
+        // 防重叠执行：如果该timer的onTick正在执行，跳过本次调用
+        if (this.manager.runningTicks.has(timerId)) {
+            if (DEBUG) {
+                console.log(`跳过重叠的 onTick: ${timerId}`);
+            }
+            return;
+        }
 
-        const newData = TimerDataUpdater.calculate('update', oldData);
-        this.manager.updateTimerData(timerId, newData);
+        // 标记开始执行  
+        this.manager.runningTicks.add(timerId);
 
-        // 2. Update file (includes search logic)
-        const updated = await this.fileManager.updateTimerByIdWithSearch(timerId, newData);
+        try {
+            // 1. Get and update data
+            const oldData = this.manager.getTimerData(timerId);
+            if (!oldData || oldData.class !== 'timer-r') return;
 
-        if (!updated) {
-            // Timer no longer exists, stop it
-            this.manager.stopTimer(timerId);
+            const newData = TimerDataUpdater.calculate('update', oldData);
+            this.manager.updateTimerData(timerId, newData);
+
+            // 2. Update file (includes search logic)
+            const updated = await this.fileManager.updateTimerByIdWithSearch(timerId, newData);
+
+            if (!updated) {
+                // Timer no longer exists, stop it
+                this.manager.stopTimer(timerId);
+            }
+        } finally {
+            // 确保无论成功还是异常都会清理执行标记
+            this.manager.runningTicks.delete(timerId);
         }
     }
 
@@ -1575,3 +1877,4 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
 }
 
 module.exports = TimerPlugin;
+/* nosourcemap */

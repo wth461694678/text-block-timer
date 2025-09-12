@@ -4,6 +4,9 @@
 
 A text block timing tool designed for Obsidian, allowing you to add a **count-up stopwatch** function to any text line in your notes.
 
+## Latest Change 
+**==Major Optimization==**: Resolved the potential stuck issue when Obsidian switches back to the foreground, improved the timer performance.
+
 ## Features
 
 ![Demo](https://github.com/wth461694678/text-block-timer/blob/main/demo/demo.gif)
@@ -83,6 +86,8 @@ In the default settings, path control is disabled. When you only want to use the
   ![pathControl_black](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif)
 
 ## Version Log:
+- V1.0.7
+  1. **==Major Optimization==**: Resolved the potential stuck issue when Obsidian switches back to the foreground, improved the timer performance.
 - V1.0.6
   1. BUG Fix: Resolved the issue of startup failure caused by incorrect language configuration code
 - V1.0.5
@@ -109,4 +114,4 @@ In the default settings, path control is disabled. When you only want to use the
 ## Development Information
 
 - Developer: frankthwang
-- Version: 1.0.6
+- Version: 1.0.7
