@@ -16,7 +16,7 @@ const CHECKBOX_REGEX = /^(?:(\s*)(?:[-+*]|\d+\.)\s+)\[(.{1})\]\s+/
 // —— Base62 工具函数 —— //
 const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
-const DEBUG = true;
+const DEBUG = false;
 
 // Performance monitor: lightweight sync/async timing collector
 class PerfMonitor {
@@ -1877,4 +1877,5 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
 }
 
 module.exports = TimerPlugin;
+
 /* nosourcemap */
