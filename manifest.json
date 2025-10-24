@@ -1,10 +1,10 @@
 {
     "id": "text-block-timer",
-    "version": "1.0.7",
+    "version": "1.0.8",
     "minAppVersion": "1.8.0",
     "name": "Text Block Timer",
     "author": "frankthwang",
-    "description": "Add a timer to text block to enable count-up timing (Performance Improved Now!).",
+    "description": "Add a timer to text block to enable count-up timing (Performance Improved!).",
     "isDesktopOnly": false,
     "main": "main.js"
 }

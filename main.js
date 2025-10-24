@@ -308,6 +308,16 @@ const TRANSLATIONS = {
                     tail: "End of line"
                 }
             },
+            timerIcon: {
+                runningIcon: {
+                    name: "Running timer icon",
+                    desc: "Set the icon displayed for running timers (default: ⏳)"
+                },
+                pausedIcon: {
+                    name: "Paused timer icon",
+                    desc: "Set the icon displayed for paused timers (default: 💐)"
+                }
+            },
             enableCheckboxToTimer: {
                 name: "Enable checkbox to timer",
                 desc: "Allow checkboxes to control timers",
@@ -375,6 +385,16 @@ const TRANSLATIONS = {
                 choice: {
                     head: "在文本前插入",
                     tail: "在文本后插入"
+                }
+            },
+            timerIcon: {
+                runningIcon: {
+                    name: "运行中计时器图标",
+                    desc: "设置运行中计时器显示的图标（默认: ⏳）"
+                },
+                pausedIcon: {
+                    name: "暂停计时器图标",
+                    desc: "设置暂停计时器显示的图标（默认: 💐）"
                 }
             },
             enableCheckboxToTimer: {
@@ -446,6 +466,16 @@ const TRANSLATIONS = {
                     tail: "在文本後插入"
                 }
             },
+            timerIcon: {
+                runningIcon: {
+                    name: "運行中計時器圖標",
+                    desc: "設置運行中計時器顯示的圖標（默認: ⏳）"
+                },
+                pausedIcon: {
+                    name: "暫停計時器圖標",
+                    desc: "設置暫停計時器顯示的圖標（默認: 💐）"
+                }
+            },
             enableCheckboxToTimer: {
                 name: "使用任務狀態控制計時器",
                 desc: "啟用此功能後，你可以通過更改任務框的狀態自動控制計時器的啟動、暫停、繼續",
@@ -515,6 +545,16 @@ const TRANSLATIONS = {
                     tail: "テキストの後に挿入"
                 }
             },
+            timerIcon: {
+                runningIcon: {
+                    name: "実行中タイマーアイコン",
+                    desc: "実行中タイマーに表示するアイコンを設定（デフォルト: ⏳）"
+                },
+                pausedIcon: {
+                    name: "一時停止タイマーアイコン",
+                    desc: "一時停止タイマーに表示するアイコンを設定（デフォルト: 💐）"
+                }
+            },
             enableCheckboxToTimer: {
                 name: "タスク状態制御タイマーを使います",
                 desc: "この機能を有効にすると、タスクボックスの状態を変更することでタイマーの起動、停止、継続を自働的に制御できます。",
@@ -582,6 +622,16 @@ const TRANSLATIONS = {
                 choice: {
                     head: "텍스트 앞에 삽입합니다",
                     tail: "텍스트 뒤에 삽입합니다"
+                }
+            },
+            timerIcon: {
+                runningIcon: {
+                    name: "실행 중 타이머 아이콘",
+                    desc: "실행 중 타이머에 표시할 아이콘 설정 (기본값: ⏳)"
+                },
+                pausedIcon: {
+                    name: "일시정지 타이머 아이콘",
+                    desc: "일시정지 타이머에 표시할 아이콘 설정 (기본값: 💐)"
                 }
             },
             enableCheckboxToTimer: {
@@ -829,7 +879,7 @@ class TimerFileManager {
             let line = lines[lineNum];
 
             // 3. 构造新的timer span
-            const newSpan = TimerRenderer.render(timerData);
+            const newSpan = TimerRenderer.render(timerData, this.settings);
 
             // 4. 替换行内容
             const timerRE = /<span class="timer-[rp]"[^>]*>.*?<\/span>/;
@@ -867,7 +917,7 @@ class TimerFileManager {
             // const lineText = editor.getLine(lineNum) || '';
 
             // 1. Render new span
-            const newSpan = TimerRenderer.render(timerData);
+            const newSpan = TimerRenderer.render(timerData, this.settings);
 
             // 2. Use provided parsed result or parse if needed
             // const parsed = parsedResult || (timerId ? TimerParser.parse(lineText, timerId) : null);
@@ -1036,7 +1086,7 @@ class TimerFileManager {
                 modified = true;
 
                 // 构造新的timer span
-                const newSpan = TimerRenderer.render(parsed);
+                const newSpan = TimerRenderer.render(parsed, this.settings);
 
                 // 替换旧的span为新的span
                 const oldSpanRegex = new RegExp(`<span class="timer-btn"[^>]*>.*?<\/span>`);
@@ -1054,7 +1104,7 @@ class TimerFileManager {
 
 // —— Utility: Format time and render span —— //
 class TimerRenderer {
-    static render(timerData) {
+    static render(timerData, settings = null) {
 
         const totalSeconds = timerData.dur
 
@@ -1072,7 +1122,18 @@ class TimerRenderer {
 
         // 返回格式化后的字符串
         const formatted = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
-        const timericon = timerData.class === 'timer-r' ? '⏳' : '⏳'; // 🎉
+
+        // 根据设置和计时器状态选择图标
+        let timericon;
+        if (settings) {
+            // 允许用户只设置其中一个图标，未设置的使用默认值
+            const runningIcon = settings.runningIcon !== undefined ? settings.runningIcon : '⏳';
+            const pausedIcon = settings.pausedIcon !== undefined ? settings.pausedIcon : '💐';
+            timericon = timerData.class === 'timer-r' ? runningIcon : pausedIcon;
+        } else {
+            // 回退到默认图标
+            timericon = timerData.class === 'timer-r' ? '⏳' : '💐';
+        }
 
         return `<span class="${timerData.class}" id="${timerData.timerId}" data-dur="${timerData.dur}" data-ts="${timerData.ts}">【${timericon}${formatted} 】</span>`;
     }
@@ -1178,7 +1239,9 @@ class TimerPlugin extends obsidian.Plugin {
             runningCheckboxState: '/',
             pausedCheckboxState: '-xX',
             checkboxToTimerPathRestriction: 'disable',
-            pathRestrictionPaths: []
+            pathRestrictionPaths: [],
+            runningIcon: '⏳',
+            pausedIcon: '💐'
         };
 
         await this.loadSettings();
@@ -1713,6 +1776,31 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
                     });
             });
 
+        // Timer icon settings
+        new obsidian.Setting(containerEl)
+            .setName(lang.timerIcon.runningIcon.name)
+            .setDesc(lang.timerIcon.runningIcon.desc)
+            .addText(text => {
+                text
+                    .setValue(this.plugin.settings.runningIcon)
+                    .onChange(async(value) => {
+                        this.plugin.settings.runningIcon = value || '⏳';
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        new obsidian.Setting(containerEl)
+            .setName(lang.timerIcon.pausedIcon.name)
+            .setDesc(lang.timerIcon.pausedIcon.desc)
+            .addText(text => {
+                text
+                    .setValue(this.plugin.settings.pausedIcon)
+                    .onChange(async(value) => {
+                        this.plugin.settings.pausedIcon = value || '💐';
+                        await this.plugin.saveSettings();
+                    });
+            });
+
         containerEl.createEl('div', { text: '' });
         containerEl.createEl('h3', { text: lang.sections.bycommand.name });
         new obsidian.Setting(containerEl)
@@ -1877,5 +1965,5 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
 }
 
 module.exports = TimerPlugin;
-
+/* nosourcemap */
 /* nosourcemap */
