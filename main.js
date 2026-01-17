@@ -3,6 +3,7 @@
 const obsidian = require('obsidian');
 
 const { EditorView } = require('@codemirror/view');
+const { Transaction } = require('@codemirror/state');
 
 // Regex constants
 const UPDATE_INTERVAL = 1000;
@@ -946,9 +947,19 @@ class TimerFileManager {
             const finalSpan = needsSpacing ? ' ' + newSpan + ' ' : newSpan;
 
             // 5. Execute write
-            editor.replaceRange(
-                finalSpan, { line: lineNum, ch: before }, { line: lineNum, ch: after }
-            );
+            if (editor.cm && editor.cm.dispatch) {
+                const from = editor.posToOffset({ line: lineNum, ch: before });
+                const to = editor.posToOffset({ line: lineNum, ch: after });
+
+                editor.cm.dispatch({
+                    changes: { from, to, insert: finalSpan },
+                    annotations: Transaction.addToHistory.of(false)
+                });
+            } else {
+                editor.replaceRange(
+                    finalSpan, { line: lineNum, ch: before }, { line: lineNum, ch: after }
+                );
+            }
 
             // 6. Update location record
             this.locations.set(timerId, { view, file, lineNum });
@@ -1035,7 +1046,7 @@ class TimerFileManager {
             // ol
             const orderedListMatch = ORDERED_LIST.exec(lineText);
             const orderedListLen = orderedListMatch ? orderedListMatch[0].length : 0;
-            // ul 
+            // ul
             const ulMatch = UNORDERED_LIST.exec(lineText);
             const ulLen = ulMatch ? ulMatch[0].length : 0;
             // header
@@ -1580,7 +1591,7 @@ class TimerPlugin extends obsidian.Plugin {
             return;
         }
 
-        // 标记开始执行  
+        // 标记开始执行
         this.manager.runningTicks.add(timerId);
 
         try {
