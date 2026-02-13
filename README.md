@@ -21,7 +21,7 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 
 ## Features
 
-![Demo](https://github.com/wth461694678/text-block-timer/blob/main/demo/demo.gif)
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/demo.gif" width="400px">
 
 - Add timers to any text line, supporting multiple timers running simultaneously (stopwatch function).
 - ▶️/⏸️ Start, pause, and resume timing for tasks.
