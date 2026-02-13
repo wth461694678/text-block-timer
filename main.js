@@ -18,7 +18,11 @@ class TimerWidget extends WidgetType {
 
     toDOM() {
         const span = document.createElement('span');
-        span.className = 'timer-widget-display';
+
+        // Detect running vs paused state from the HTML class
+        const isRunning = this.htmlText.includes('class="timer-r"');
+        const stateClass = isRunning ? 'timer-widget-running' : 'timer-widget-paused';
+        span.className = `timer-widget-display ${stateClass}`;
 
         // Extract visible content from HTML (【⏳00:00:00 】)
         const match = this.htmlText.match(/>([^<]*)<\/span>/);
@@ -482,7 +486,8 @@ const TRANSLATIONS = {
                 bycheckbox: {
                     name: "Timer by Checkbox",
                     desc: "Configure checkbox-based timer controls"
-                }
+                },
+                appearance: { name: "Appearance Settings" }
             },
             autostop: {
                 name: "Auto-stop timers",
@@ -517,6 +522,32 @@ const TRANSLATIONS = {
                 choice: {
                     full: "Full Format (HH:MM:SS) - Always show hours, minutes, and seconds",
                     smart: "Smart Format - Hide hours when zero (MM:SS), show full format (HH:MM:SS) when > 1 hour"
+                }
+            },
+            timerDisplayStyle: {
+                name: "Timer Display Style",
+                desc: "Choose the visual style for timer display (applies to both edit and reading modes)",
+                choice: {
+                    badge: "Badge - Timer shown as a styled badge with background and border",
+                    plain: "Plain - Timer shown as simple colored text"
+                }
+            },
+            timerColors: {
+                runningText: {
+                    name: "Running Timer Text Color",
+                    desc: "Text color for running timers"
+                },
+                runningBg: {
+                    name: "Running Timer Background Color",
+                    desc: "Background color for running timers (badge mode only)"
+                },
+                pausedText: {
+                    name: "Paused Timer Text Color",
+                    desc: "Text color for paused timers"
+                },
+                pausedBg: {
+                    name: "Paused Timer Background Color",
+                    desc: "Background color for paused timers (badge mode only)"
                 }
             },
             enableCheckboxToTimer: {
@@ -569,7 +600,8 @@ const TRANSLATIONS = {
                 bycheckbox: {
                     name: "通过任务状态自动控制计时器",
                     desc: "你可以在切换任务状态（复选框类型）的同时，自动生成或更新计时器，对Tasks Plugin（任务插件）用户友好"
-                }
+                },
+                appearance: { name: "外观设置" }
             },
             autostop: {
                 name: "自动停止计时器",
@@ -604,6 +636,32 @@ const TRANSLATIONS = {
                 choice: {
                     full: "完整格式 (HH:MM:SS) - 总是显示小时、分钟和秒数",
                     smart: "智能格式 - 小时为零时隐藏 (MM:SS)，超过1小时时显示完整格式 (HH:MM:SS)"
+                }
+            },
+            timerDisplayStyle: {
+                name: "计时器显示风格",
+                desc: "选择计时器的显示风格（同时应用于编辑模式和阅读模式）",
+                choice: {
+                    badge: "徽章样式 - 带背景色和边框的标签风格",
+                    plain: "纯文本样式 - 仅显示彩色文字"
+                }
+            },
+            timerColors: {
+                runningText: {
+                    name: "运行中计时器文字颜色",
+                    desc: "运行中计时器的文字颜色"
+                },
+                runningBg: {
+                    name: "运行中计时器背景颜色",
+                    desc: "运行中计时器的背景颜色（仅徽章模式）"
+                },
+                pausedText: {
+                    name: "已暂停计时器文字颜色",
+                    desc: "已暂停计时器的文字颜色"
+                },
+                pausedBg: {
+                    name: "已暂停计时器背景颜色",
+                    desc: "已暂停计时器的背景颜色（仅徽章模式）"
                 }
             },
             enableCheckboxToTimer: {
@@ -656,7 +714,8 @@ const TRANSLATIONS = {
                 bycheckbox: {
                     name: "通過任務狀態自動控制計時器",
                     desc: "你可以在切換任務狀態的同時，自动生成或更新計時器，對Tasks Plugin（任務插件）用戶友好"
-                }
+                },
+                appearance: { name: "外觀設定" }
             },
             autostop: {
                 name: "自動停止計時器",
@@ -691,6 +750,32 @@ const TRANSLATIONS = {
                 choice: {
                     full: "完整格式 (HH:MM:SS) - 總是顯示小時、分鐘和秒數",
                     smart: "智能格式 - 小時為零時隱藏 (MM:SS)，超過1小時時顯示完整格式 (HH:MM:SS)"
+                }
+            },
+            timerDisplayStyle: {
+                name: "計時器顯示風格",
+                desc: "選擇計時器的顯示風格（同時應用於編輯模式和閱讀模式）",
+                choice: {
+                    badge: "徽章樣式 - 帶背景色和邊框的標籤風格",
+                    plain: "純文字樣式 - 僅顯示彩色文字"
+                }
+            },
+            timerColors: {
+                runningText: {
+                    name: "運行中計時器文字顏色",
+                    desc: "運行中計時器的文字顏色"
+                },
+                runningBg: {
+                    name: "運行中計時器背景顏色",
+                    desc: "運行中計時器的背景顏色（僅徽章模式）"
+                },
+                pausedText: {
+                    name: "已暫停計時器文字顏色",
+                    desc: "已暫停計時器的文字顏色"
+                },
+                pausedBg: {
+                    name: "已暫停計時器背景顏色",
+                    desc: "已暫停計時器的背景顏色（僅徽章模式）"
                 }
             },
             enableCheckboxToTimer: {
@@ -743,7 +828,8 @@ const TRANSLATIONS = {
                 bycheckbox: {
                     name: "チェックボックスでタイマーを自動制御",
                     desc: "チェックボックスを切り替えるだけでタイマーが自動作成・更新されます。Tasks プラグインユーザーに特に便利です。"
-                }
+                },
+                appearance: { name: "外観設定" }
             },
             autostop: {
                 name: "タイマーの自動停止",
@@ -778,6 +864,32 @@ const TRANSLATIONS = {
                 choice: {
                     full: "フルフォーマット (HH:MM:SS) - 常に時間、分、秒を表示",
                     smart: "スマートフォーマット - 0時間の場合は非表示 (MM:SS)、1時間以上の場合はフルフォーマット (HH:MM:SS) を表示"
+                }
+            },
+            timerDisplayStyle: {
+                name: "タイマー表示スタイル",
+                desc: "タイマーの表示スタイルを選択してください（編集モードと閲覧モードの両方に適用されます）",
+                choice: {
+                    badge: "バッジスタイル - 背景色と枠線付きのラベルスタイル",
+                    plain: "プレーンスタイル - シンプルなカラーテキスト"
+                }
+            },
+            timerColors: {
+                runningText: {
+                    name: "実行中タイマーの文字色",
+                    desc: "実行中タイマーのテキスト色"
+                },
+                runningBg: {
+                    name: "実行中タイマーの背景色",
+                    desc: "実行中タイマーの背景色（バッジモードのみ）"
+                },
+                pausedText: {
+                    name: "一時停止タイマーの文字色",
+                    desc: "一時停止タイマーのテキスト色"
+                },
+                pausedBg: {
+                    name: "一時停止タイマーの背景色",
+                    desc: "一時停止タイマーの背景色（バッジモードのみ）"
                 }
             },
             enableCheckboxToTimer: {
@@ -830,7 +942,8 @@ const TRANSLATIONS = {
                 bycheckbox: {
                     name: "체크박스를 통한 자동 타이머 제어",
                     desc: "태스크 상태를 전환하는 동안 타이머를 자동으로 생성하거나 업데이트할 수 있으며,  Tasks Plugin 사용자들에게 매우 우호적입니다"
-                }
+                },
+                appearance: { name: "외관 설정" }
             },
             autostop: {
                 name: "타이머 자동 정지",
@@ -865,6 +978,32 @@ const TRANSLATIONS = {
                 choice: {
                     full: "전체 형식 (HH:MM:SS) - 항상 시간, 분, 초를 표시합니다",
                     smart: "스마트 형식 - 0시간일 때 숨김 (MM:SS), 1시간 이상일 때 전체 형식 (HH:MM:SS) 표시"
+                }
+            },
+            timerDisplayStyle: {
+                name: "타이머 표시 스타일",
+                desc: "타이머의 표시 스타일을 선택하세요 (편집 모드와 읽기 모드 모두에 적용됩니다)",
+                choice: {
+                    badge: "배지 스타일 - 배경색과 테두리가 있는 라벨 스타일",
+                    plain: "일반 스타일 - 심플한 컬러 텍스트"
+                }
+            },
+            timerColors: {
+                runningText: {
+                    name: "실행 중 타이머 텍스트 색상",
+                    desc: "실행 중인 타이머의 텍스트 색상"
+                },
+                runningBg: {
+                    name: "실행 중 타이머 배경 색상",
+                    desc: "실행 중인 타이머의 배경 색상 (배지 모드 전용)"
+                },
+                pausedText: {
+                    name: "일시정지 타이머 텍스트 색상",
+                    desc: "일시정지된 타이머의 텍스트 색상"
+                },
+                pausedBg: {
+                    name: "일시정지 타이머 배경 색상",
+                    desc: "일시정지된 타이머의 배경 색상 (배지 모드 전용)"
                 }
             },
             enableCheckboxToTimer: {
@@ -1506,10 +1645,19 @@ class TimerPlugin extends obsidian.Plugin {
             pathRestrictionPaths: [],
             runningIcon: '⏳',
             pausedIcon: '💐',
-            timeDisplayFormat: 'full'
+            timeDisplayFormat: 'full',
+            timerDisplayStyle: 'badge',
+            // Color customization
+            runningTextColor: '#10b981',
+            runningBgColor: 'rgba(16, 185, 129, 0.15)',
+            pausedTextColor: '#6b7280',
+            pausedBgColor: 'rgba(107, 114, 128, 0.12)'
         };
 
         await this.loadSettings();
+
+        // Apply timer display style to body
+        this.applyDisplayStyle();
 
         // Initialize TimerFileManager with settings
         this.fileManager = new TimerFileManager(this.app, this.settings);
@@ -1685,6 +1833,15 @@ class TimerPlugin extends obsidian.Plugin {
     onunload() {
         this.manager.clearAll();
         this.fileManager.clearLocations();
+        // Clean up body class
+        document.body.classList.remove('timer-style-badge', 'timer-style-plain');
+        // Clean up CSS custom properties
+        const root = document.documentElement;
+        ['--timer-running-color', '--timer-running-bg', '--timer-running-border',
+            '--timer-running-bg-hover', '--timer-running-border-hover',
+            '--timer-paused-color', '--timer-paused-bg', '--timer-paused-border',
+            '--timer-paused-bg-hover', '--timer-paused-border-hover'
+        ].forEach(prop => root.style.removeProperty(prop));
     }
 
 
@@ -1954,6 +2111,63 @@ class TimerPlugin extends obsidian.Plugin {
         }
     }
 
+    applyDisplayStyle() {
+        const style = this.settings.timerDisplayStyle || 'badge';
+        document.body.classList.remove('timer-style-badge', 'timer-style-plain');
+        document.body.classList.add(`timer-style-${style}`);
+        this.applyTimerColors();
+    }
+
+    /**
+     * Convert a hex color to rgba with given alpha
+     */
+    hexToRgba(hex, alpha) {
+        const r = parseInt(hex.slice(1, 3), 16);
+        const g = parseInt(hex.slice(3, 5), 16);
+        const b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    /**
+     * Apply user-customized timer colors as CSS custom properties
+     */
+    applyTimerColors() {
+        const root = document.documentElement;
+        const s = this.settings;
+
+        // Running colors
+        const runningColor = s.runningTextColor || '#10b981';
+        const runningBg = s.runningBgColor || 'rgba(16, 185, 129, 0.15)';
+        root.style.setProperty('--timer-running-color', runningColor);
+        root.style.setProperty('--timer-running-bg', runningBg);
+
+        // Compute border & hover variants from bg
+        // Parse runningBg to derive border (higher alpha) and hover (higher alpha)
+        const runningBgMatch = runningBg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]*)\)/);
+        if (runningBgMatch) {
+            const [, rr, rg, rb, ra] = runningBgMatch;
+            const baseAlpha = parseFloat(ra) || 0.15;
+            root.style.setProperty('--timer-running-border', `rgba(${rr}, ${rg}, ${rb}, ${Math.min(baseAlpha + 0.15, 1)})`);
+            root.style.setProperty('--timer-running-bg-hover', `rgba(${rr}, ${rg}, ${rb}, ${Math.min(baseAlpha + 0.1, 1)})`);
+            root.style.setProperty('--timer-running-border-hover', `rgba(${rr}, ${rg}, ${rb}, ${Math.min(baseAlpha + 0.35, 1)})`);
+        }
+
+        // Paused colors
+        const pausedColor = s.pausedTextColor || '#6b7280';
+        const pausedBg = s.pausedBgColor || 'rgba(107, 114, 128, 0.12)';
+        root.style.setProperty('--timer-paused-color', pausedColor);
+        root.style.setProperty('--timer-paused-bg', pausedBg);
+
+        const pausedBgMatch = pausedBg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+),?\s*([\d.]*)\)/);
+        if (pausedBgMatch) {
+            const [, pr, pg, pb, pa] = pausedBgMatch;
+            const baseAlpha = parseFloat(pa) || 0.12;
+            root.style.setProperty('--timer-paused-border', `rgba(${pr}, ${pg}, ${pb}, ${Math.min(baseAlpha + 0.13, 1)})`);
+            root.style.setProperty('--timer-paused-bg-hover', `rgba(${pr}, ${pg}, ${pb}, ${Math.min(baseAlpha + 0.08, 1)})`);
+            root.style.setProperty('--timer-paused-border-hover', `rgba(${pr}, ${pg}, ${pb}, ${Math.min(baseAlpha + 0.28, 1)})`);
+        }
+    }
+
     toggleTimerbyCheckboxState(oldCheckboxState, newCheckboxState, newLineText, view, lineNum) {
 
         if (oldCheckboxState === '') {
@@ -1994,6 +2208,20 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
             return filePath;
         }
         return filePath + '/';
+    }
+
+    /**
+     * Convert rgba string to hex color for color picker input
+     */
+    rgbaToHex(rgba) {
+        const match = rgba.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/);
+        if (match) {
+            const r = parseInt(match[1]).toString(16).padStart(2, '0');
+            const g = parseInt(match[2]).toString(16).padStart(2, '0');
+            const b = parseInt(match[3]).toString(16).padStart(2, '0');
+            return `#${r}${g}${b}`;
+        }
+        return rgba; // fallback if already hex
     }
 
     display() {
@@ -2050,47 +2278,6 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
                     .setValue(this.plugin.settings.timerInsertLocation)
                     .onChange(async(value) => {
                         this.plugin.settings.timerInsertLocation = value;
-                        await this.plugin.saveSettings();
-                    });
-            });
-
-        // Timer icon settings
-        new obsidian.Setting(containerEl)
-            .setName(lang.timerIcon.runningIcon.name)
-            .setDesc(lang.timerIcon.runningIcon.desc)
-            .addText(text => {
-                text
-                    .setValue(this.plugin.settings.runningIcon)
-                    .onChange(async(value) => {
-                        this.plugin.settings.runningIcon = value || '⏳';
-                        await this.plugin.saveSettings();
-                    });
-            });
-
-        new obsidian.Setting(containerEl)
-            .setName(lang.timerIcon.pausedIcon.name)
-            .setDesc(lang.timerIcon.pausedIcon.desc)
-            .addText(text => {
-                text
-                    .setValue(this.plugin.settings.pausedIcon)
-                    .onChange(async(value) => {
-                        this.plugin.settings.pausedIcon = value || '💐';
-                        await this.plugin.saveSettings();
-                    });
-            });
-
-        // Time display format settings
-        const timeFormatLang = lang.timeDisplayFormat;
-        new obsidian.Setting(containerEl)
-            .setName(timeFormatLang.name)
-            .setDesc(timeFormatLang.desc)
-            .addDropdown(dropdown => {
-                dropdown
-                    .addOption('full', timeFormatLang.choice.full)
-                    .addOption('smart', timeFormatLang.choice.smart)
-                    .setValue(this.plugin.settings.timeDisplayFormat || 'full')
-                    .onChange(async(value) => {
-                        this.plugin.settings.timeDisplayFormat = value;
                         await this.plugin.saveSettings();
                     });
             });
@@ -2254,6 +2441,179 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
                     addPath('');
                 }
             }
+        }
+
+        // ===== Appearance Settings Section =====
+        containerEl.createEl('div', { text: '' });
+        containerEl.createEl('h3', { text: lang.sections.appearance.name });
+
+        // Time display format settings
+        const timeFormatLang = lang.timeDisplayFormat;
+        new obsidian.Setting(containerEl)
+            .setName(timeFormatLang.name)
+            .setDesc(timeFormatLang.desc)
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('full', timeFormatLang.choice.full)
+                    .addOption('smart', timeFormatLang.choice.smart)
+                    .setValue(this.plugin.settings.timeDisplayFormat || 'full')
+                    .onChange(async(value) => {
+                        this.plugin.settings.timeDisplayFormat = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        // Timer display style settings
+        const displayStyleLang = lang.timerDisplayStyle;
+        new obsidian.Setting(containerEl)
+            .setName(displayStyleLang.name)
+            .setDesc(displayStyleLang.desc)
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('badge', displayStyleLang.choice.badge)
+                    .addOption('plain', displayStyleLang.choice.plain)
+                    .setValue(this.plugin.settings.timerDisplayStyle || 'badge')
+                    .onChange(async(value) => {
+                        this.plugin.settings.timerDisplayStyle = value;
+                        await this.plugin.saveSettings();
+                        this.plugin.applyDisplayStyle();
+                        this.display(); // Re-render to show/hide bg color pickers
+                    });
+            });
+
+        // Color customization settings
+        const colorLang = lang.timerColors;
+        const isBadge = (this.plugin.settings.timerDisplayStyle || 'badge') === 'badge';
+
+        // Helper: create a color picker setting
+        const addColorSetting = (name, desc, settingKey, defaultColor) => {
+            const setting = new obsidian.Setting(containerEl)
+                .setName(name)
+                .setDesc(desc);
+            setting.controlEl.createEl('input', {
+                type: 'color',
+                value: this.plugin.settings[settingKey] || defaultColor,
+                cls: 'timer-color-input-native'
+            }, (input) => {
+                input.style.width = '40px';
+                input.style.height = '30px';
+                input.style.border = 'none';
+                input.style.padding = '0';
+                input.style.cursor = 'pointer';
+                input.style.backgroundColor = 'transparent';
+                input.addEventListener('input', async(e) => {
+                    this.plugin.settings[settingKey] = e.target.value;
+                    // For bg color, convert hex to rgba
+                    if (settingKey.endsWith('BgColor')) {
+                        const hex = e.target.value;
+                        const r = parseInt(hex.slice(1, 3), 16);
+                        const g = parseInt(hex.slice(3, 5), 16);
+                        const b = parseInt(hex.slice(5, 7), 16);
+                        this.plugin.settings[settingKey] = `rgba(${r}, ${g}, ${b}, 0.15)`;
+                    }
+                    await this.plugin.saveSettings();
+                    this.plugin.applyTimerColors();
+                });
+            });
+            return setting;
+        };
+
+        // Running timer icon
+        new obsidian.Setting(containerEl)
+            .setName(lang.timerIcon.runningIcon.name)
+            .setDesc(lang.timerIcon.runningIcon.desc)
+            .addText(text => {
+                text
+                    .setValue(this.plugin.settings.runningIcon)
+                    .onChange(async(value) => {
+                        this.plugin.settings.runningIcon = value || '⏳';
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        // Running text color
+        addColorSetting(
+            colorLang.runningText.name,
+            colorLang.runningText.desc,
+            'runningTextColor',
+            '#10b981'
+        );
+
+        // Running bg color (badge mode only)
+        if (isBadge) {
+            const runBgSetting = new obsidian.Setting(containerEl)
+                .setName(colorLang.runningBg.name)
+                .setDesc(colorLang.runningBg.desc);
+            runBgSetting.controlEl.createEl('input', {
+                type: 'color',
+                value: this.rgbaToHex(this.plugin.settings.runningBgColor || 'rgba(16, 185, 129, 0.15)'),
+                cls: 'timer-color-input-native'
+            }, (input) => {
+                input.style.width = '40px';
+                input.style.height = '30px';
+                input.style.border = 'none';
+                input.style.padding = '0';
+                input.style.cursor = 'pointer';
+                input.style.backgroundColor = 'transparent';
+                input.addEventListener('input', async(e) => {
+                    const hex = e.target.value;
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    this.plugin.settings.runningBgColor = `rgba(${r}, ${g}, ${b}, 0.15)`;
+                    await this.plugin.saveSettings();
+                    this.plugin.applyTimerColors();
+                });
+            });
+        }
+
+        // Paused timer icon
+        new obsidian.Setting(containerEl)
+            .setName(lang.timerIcon.pausedIcon.name)
+            .setDesc(lang.timerIcon.pausedIcon.desc)
+            .addText(text => {
+                text
+                    .setValue(this.plugin.settings.pausedIcon)
+                    .onChange(async(value) => {
+                        this.plugin.settings.pausedIcon = value || '💐';
+                        await this.plugin.saveSettings();
+                    });
+            });
+
+        // Paused text color
+        addColorSetting(
+            colorLang.pausedText.name,
+            colorLang.pausedText.desc,
+            'pausedTextColor',
+            '#6b7280'
+        );
+
+        // Paused bg color (badge mode only)
+        if (isBadge) {
+            const pausedBgSetting = new obsidian.Setting(containerEl)
+                .setName(colorLang.pausedBg.name)
+                .setDesc(colorLang.pausedBg.desc);
+            pausedBgSetting.controlEl.createEl('input', {
+                type: 'color',
+                value: this.rgbaToHex(this.plugin.settings.pausedBgColor || 'rgba(107, 114, 128, 0.12)'),
+                cls: 'timer-color-input-native'
+            }, (input) => {
+                input.style.width = '40px';
+                input.style.height = '30px';
+                input.style.border = 'none';
+                input.style.padding = '0';
+                input.style.cursor = 'pointer';
+                input.style.backgroundColor = 'transparent';
+                input.addEventListener('input', async(e) => {
+                    const hex = e.target.value;
+                    const r = parseInt(hex.slice(1, 3), 16);
+                    const g = parseInt(hex.slice(3, 5), 16);
+                    const b = parseInt(hex.slice(5, 7), 16);
+                    this.plugin.settings.pausedBgColor = `rgba(${r}, ${g}, ${b}, 0.12)`;
+                    await this.plugin.saveSettings();
+                    this.plugin.applyTimerColors();
+                });
+            });
         }
     }
 }

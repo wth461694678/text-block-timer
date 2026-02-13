@@ -8,5 +8,10 @@
   "pathRestrictionPaths": [],
   "runningIcon": "⏳",
   "pausedIcon": "💐",
-  "timeDisplayFormat": "smart"
+  "timeDisplayFormat": "smart",
+  "timerDisplayStyle": "badge",
+  "runningTextColor": "#10b981",
+  "runningBgColor": "rgba(16, 185, 129, 0.15)",
+  "pausedTextColor": "#6b7280",
+  "pausedBgColor": "rgba(107, 114, 128, 0.12)"
 }

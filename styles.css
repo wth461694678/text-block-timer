@@ -1,27 +1,167 @@
-.timer-r {
-    color: #10b981;
+/* ===== CSS Custom Properties (defaults, overridden by JS) ===== */
+
+:root {
+    /* Running timer colors */
+    --timer-running-color: #10b981;
+    --timer-running-bg: rgba(16, 185, 129, 0.15);
+    --timer-running-border: rgba(16, 185, 129, 0.3);
+    --timer-running-bg-hover: rgba(16, 185, 129, 0.25);
+    --timer-running-border-hover: rgba(16, 185, 129, 0.5);
+    /* Paused timer colors */
+    --timer-paused-color: #6b7280;
+    --timer-paused-bg: rgba(107, 114, 128, 0.12);
+    --timer-paused-border: rgba(107, 114, 128, 0.25);
+    --timer-paused-bg-hover: rgba(107, 114, 128, 0.2);
+    --timer-paused-border-hover: rgba(107, 114, 128, 0.4);
 }
 
 
-/* Timer widget display in edit mode */
+/* ===== Common widget base ===== */
 
 .timer-widget-display {
+    display: inline-block;
+    cursor: pointer;
+    user-select: none;
+}
+
+
+/* ===== Badge Style (default) ===== */
+
+
+/* Badge common properties */
+
+.timer-style-badge .timer-r,
+.timer-style-badge .timer-p,
+.timer-style-badge .timer-widget-running,
+.timer-style-badge .timer-widget-paused {
     display: inline-block;
     padding: 0 4px;
     margin: 0 2px;
     border-radius: 3px;
-    background-color: rgba(16, 185, 129, 0.15);
-    color: #10b981;
     font-weight: 500;
-    cursor: pointer;
     user-select: none;
-    border: 1px solid rgba(16, 185, 129, 0.3);
     font-family: system-ui, -apple-system, sans-serif;
     font-size: 0.95em;
-    transition: background-color 0.2s ease;
+    transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.timer-widget-display:hover {
-    background-color: rgba(16, 185, 129, 0.25);
-    border-color: rgba(16, 185, 129, 0.5);
+
+/* Badge - Running timer (preview mode) */
+
+.timer-style-badge .timer-r {
+    background-color: var(--timer-running-bg);
+    color: var(--timer-running-color);
+    border: 1px solid var(--timer-running-border);
+}
+
+.timer-style-badge .timer-r:hover {
+    background-color: var(--timer-running-bg-hover);
+    border-color: var(--timer-running-border-hover);
+}
+
+
+/* Badge - Paused timer (preview mode) */
+
+.timer-style-badge .timer-p {
+    background-color: var(--timer-paused-bg);
+    color: var(--timer-paused-color);
+    border: 1px solid var(--timer-paused-border);
+}
+
+.timer-style-badge .timer-p:hover {
+    background-color: var(--timer-paused-bg-hover);
+    border-color: var(--timer-paused-border-hover);
+}
+
+
+/* Badge - Running timer widget (edit mode) */
+
+.timer-style-badge .timer-widget-running {
+    background-color: var(--timer-running-bg);
+    color: var(--timer-running-color);
+    border: 1px solid var(--timer-running-border);
+    cursor: pointer;
+}
+
+.timer-style-badge .timer-widget-running:hover {
+    background-color: var(--timer-running-bg-hover);
+    border-color: var(--timer-running-border-hover);
+}
+
+
+/* Badge - Paused timer widget (edit mode) */
+
+.timer-style-badge .timer-widget-paused {
+    background-color: var(--timer-paused-bg);
+    color: var(--timer-paused-color);
+    border: 1px solid var(--timer-paused-border);
+    cursor: pointer;
+}
+
+.timer-style-badge .timer-widget-paused:hover {
+    background-color: var(--timer-paused-bg-hover);
+    border-color: var(--timer-paused-border-hover);
+}
+
+
+/* ===== Plain Style ===== */
+
+
+/* Plain - Running timer (preview mode) */
+
+.timer-style-plain .timer-r {
+    color: var(--timer-running-color);
+}
+
+
+/* Plain - Paused timer (preview mode) - no special style, inherit default */
+
+.timer-style-plain .timer-p {
+    color: var(--timer-paused-color);
+}
+
+
+/* Plain - Running timer widget (edit mode) */
+
+.timer-style-plain .timer-widget-running {
+    color: var(--timer-running-color);
+    cursor: pointer;
+}
+
+
+/* Plain - Paused timer widget (edit mode) */
+
+.timer-style-plain .timer-widget-paused {
+    color: var(--timer-paused-color);
+    cursor: pointer;
+}
+
+
+/* ===== Color Picker Settings UI ===== */
+
+.timer-color-setting {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.timer-color-preview {
+    width: 28px;
+    height: 28px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+}
+
+.timer-color-preview:hover {
+    box-shadow: 0 0 0 2px var(--interactive-accent);
+}
+
+.timer-color-input {
+    position: absolute;
+    width: 0;
+    height: 0;
+    opacity: 0;
+    overflow: hidden;
 }
