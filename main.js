@@ -319,6 +319,14 @@ const TRANSLATIONS = {
                     desc: "Set the icon displayed for paused timers (default: 💐)"
                 }
             },
+            timeDisplayFormat: {
+                name: "Time Display Format",
+                desc: "Choose how the time is displayed",
+                choice: {
+                    full: "Full Format (HH:MM:SS) - Always show hours, minutes, and seconds",
+                    smart: "Smart Format - Hide hours when zero (MM:SS), show full format (HH:MM:SS) when > 1 hour"
+                }
+            },
             enableCheckboxToTimer: {
                 name: "Enable checkbox to timer",
                 desc: "Allow checkboxes to control timers",
@@ -396,6 +404,14 @@ const TRANSLATIONS = {
                 pausedIcon: {
                     name: "暂停计时器图标",
                     desc: "设置暂停计时器显示的图标（默认: 💐）"
+                }
+            },
+            timeDisplayFormat: {
+                name: "时间显示格式",
+                desc: "选择时间的显示方式",
+                choice: {
+                    full: "完整格式 (HH:MM:SS) - 总是显示小时、分钟和秒数",
+                    smart: "智能格式 - 小时为零时隐藏 (MM:SS)，超过1小时时显示完整格式 (HH:MM:SS)"
                 }
             },
             enableCheckboxToTimer: {
@@ -477,6 +493,14 @@ const TRANSLATIONS = {
                     desc: "設置暫停計時器顯示的圖標（默認: 💐）"
                 }
             },
+            timeDisplayFormat: {
+                name: "時間顯示格式",
+                desc: "選擇時間的顯示方式",
+                choice: {
+                    full: "完整格式 (HH:MM:SS) - 總是顯示小時、分鐘和秒數",
+                    smart: "智能格式 - 小時為零時隱藏 (MM:SS)，超過1小時時顯示完整格式 (HH:MM:SS)"
+                }
+            },
             enableCheckboxToTimer: {
                 name: "使用任務狀態控制計時器",
                 desc: "啟用此功能後，你可以通過更改任務框的狀態自動控制計時器的啟動、暫停、繼續",
@@ -556,6 +580,14 @@ const TRANSLATIONS = {
                     desc: "一時停止タイマーに表示するアイコンを設定（デフォルト: 💐）"
                 }
             },
+            timeDisplayFormat: {
+                name: "時間表示形式",
+                desc: "時間の表示方法を選択してください",
+                choice: {
+                    full: "フルフォーマット (HH:MM:SS) - 常に時間、分、秒を表示",
+                    smart: "スマートフォーマット - 0時間の場合は非表示 (MM:SS)、1時間以上の場合はフルフォーマット (HH:MM:SS) を表示"
+                }
+            },
             enableCheckboxToTimer: {
                 name: "タスク状態制御タイマーを使います",
                 desc: "この機能を有効にすると、タスクボックスの状態を変更することでタイマーの起動、停止、継続を自働的に制御できます。",
@@ -633,6 +665,14 @@ const TRANSLATIONS = {
                 pausedIcon: {
                     name: "일시정지 타이머 아이콘",
                     desc: "일시정지 타이머에 표시할 아이콘 설정 (기본값: 💐)"
+                }
+            },
+            timeDisplayFormat: {
+                name: "시간 표시 형식",
+                desc: "시간 표시 방법을 선택하세요",
+                choice: {
+                    full: "전체 형식 (HH:MM:SS) - 항상 시간, 분, 초를 표시합니다",
+                    smart: "스마트 형식 - 0시간일 때 숨김 (MM:SS), 1시간 이상일 때 전체 형식 (HH:MM:SS) 표시"
                 }
             },
             enableCheckboxToTimer: {
@@ -1113,26 +1153,47 @@ class TimerFileManager {
     }
 }
 
-// —— Utility: Format time and render span —— //
-class TimerRenderer {
-    static render(timerData, settings = null) {
-
-        const totalSeconds = timerData.dur
-
-        // 计算小时数
+// —— Utility: Format time according to selected format —— //
+class TimeFormatter {
+    // Format options: 
+    // 'smart' - Hide "00:" when hours=0, show full time when hours>0
+    // 'full' - Always show with HH:MM:SS format
+    static formatTime(totalSeconds, format = 'full') {
         const hours = Math.floor(totalSeconds / 3600);
-        // 计算剩余秒数中的分钟数
         const minutes = Math.floor((totalSeconds % 3600) / 60);
-        // 计算剩余的秒数
         const seconds = totalSeconds % 60;
 
-        // 补全分钟和秒为两位
         const formattedHours = String(hours).padStart(2, '0');
         const formattedMinutes = String(minutes).padStart(2, '0');
         const formattedSeconds = String(seconds).padStart(2, '0');
 
-        // 返回格式化后的字符串
-        const formatted = `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+        switch (format) {
+            case 'full':
+                // Always show HH:MM:SS
+                return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+            case 'smart':
+                // Hide hours if 0, show MM:SS only
+                // But if hours > 0, show full HH:MM:SS
+                if (hours === 0) {
+                    return `${formattedMinutes}:${formattedSeconds}`;
+                } else {
+                    return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+                }
+            default:
+                return `${formattedHours}:${formattedMinutes}:${formattedSeconds}`;
+        }
+    }
+}
+
+// —— Utility: Format time and render span —— //
+class TimerRenderer {
+    static render(timerData, settings = null) {
+
+        const totalSeconds = timerData.dur;
+
+        // Get time format from settings or use default
+        const timeFormat = settings && settings.timeDisplayFormat ? settings.timeDisplayFormat : 'full';
+        const formatted = TimeFormatter.formatTime(totalSeconds, timeFormat);
 
         // 根据设置和计时器状态选择图标
         let timericon;
@@ -1252,7 +1313,8 @@ class TimerPlugin extends obsidian.Plugin {
             checkboxToTimerPathRestriction: 'disable',
             pathRestrictionPaths: [],
             runningIcon: '⏳',
-            pausedIcon: '💐'
+            pausedIcon: '💐',
+            timeDisplayFormat: 'full'
         };
 
         await this.loadSettings();
@@ -1812,6 +1874,22 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
                     });
             });
 
+        // Time display format settings
+        const timeFormatLang = lang.timeDisplayFormat;
+        new obsidian.Setting(containerEl)
+            .setName(timeFormatLang.name)
+            .setDesc(timeFormatLang.desc)
+            .addDropdown(dropdown => {
+                dropdown
+                    .addOption('full', timeFormatLang.choice.full)
+                    .addOption('smart', timeFormatLang.choice.smart)
+                    .setValue(this.plugin.settings.timeDisplayFormat || 'full')
+                    .onChange(async(value) => {
+                        this.plugin.settings.timeDisplayFormat = value;
+                        await this.plugin.saveSettings();
+                    });
+            });
+
         containerEl.createEl('div', { text: '' });
         containerEl.createEl('h3', { text: lang.sections.bycommand.name });
         new obsidian.Setting(containerEl)
@@ -1976,5 +2054,4 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
 }
 
 module.exports = TimerPlugin;
-/* nosourcemap */
 /* nosourcemap */

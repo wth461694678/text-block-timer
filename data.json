@@ -1,0 +1,12 @@
+{
+    "autoStopTimers": "quit",
+    "timerInsertLocation": "head",
+    "enableCheckboxToTimer": true,
+    "runningCheckboxState": "/",
+    "pausedCheckboxState": "-xX",
+    "checkboxToTimerPathRestriction": "disable",
+    "pathRestrictionPaths": [],
+    "runningIcon": "⏳",
+    "pausedIcon": "💐",
+    "timeDisplayFormat": "full"
+}
