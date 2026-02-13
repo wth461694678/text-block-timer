@@ -165,3 +165,165 @@
     opacity: 0;
     overflow: hidden;
 }
+
+
+/* ===== Time Picker Modal (iPhone-style scroll wheel) ===== */
+
+.timer-picker-modal.modal {
+    max-width: 380px;
+    width: 90vw;
+    border-radius: 16px;
+    padding: 0;
+    overflow: hidden;
+    background: var(--background-primary);
+}
+
+.timer-picker-modal .modal-content {
+    padding: 0;
+}
+
+.timer-picker-modal .modal-close-button {
+    display: none;
+}
+
+.timer-picker-header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px 24px 16px;
+}
+
+.timer-picker-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.timer-picker-wheels {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    padding: 0 20px;
+    position: relative;
+    gap: 0;
+}
+
+.timer-picker-highlight {
+    position: absolute;
+    left: 24px;
+    right: 24px;
+    border: 1.5px solid var(--background-modifier-border);
+    border-radius: 10px;
+    pointer-events: none;
+    z-index: 0;
+    display: flex;
+    align-items: center;
+}
+
+.timer-picker-colon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    width: 14px;
+    flex-shrink: 0;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text-muted);
+    z-index: 1;
+    user-select: none;
+    height: 36px;
+}
+
+.timer-picker-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 1;
+    z-index: 1;
+}
+
+.timer-picker-viewport {
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+    touch-action: none;
+    width: 100%;
+}
+
+.timer-picker-viewport:active {
+    cursor: grabbing;
+}
+
+.timer-picker-list {
+    will-change: transform;
+}
+
+.timer-picker-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.15s, font-size 0.15s;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.timer-picker-label {
+    display: none;
+}
+
+.timer-picker-footer {
+    display: flex;
+    justify-content: flex-end;
+    padding: 12px 24px 18px;
+}
+
+.timer-picker-save-btn {
+    background: transparent;
+    color: #22c55e;
+    border: none;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-size: 22px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    line-height: 1;
+}
+
+.timer-picker-save-btn:hover {
+    background-color: rgba(34, 197, 94, 0.15);
+}
+
+
+/* ===== Disabled Menu Item (Time Adjustment on running timers) ===== */
+
+.timer-menu-disabled {
+    background-color: var(--background-modifier-hover) !important;
+    opacity: 0.55;
+}
+
+.timer-menu-tooltip {
+    position: fixed;
+    z-index: 10000;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--text-on-accent);
+    background: var(--background-modifier-message);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    white-space: nowrap;
+    pointer-events: none;
+    animation: timer-tooltip-fadein 0.1s ease;
+}
+
+@keyframes timer-tooltip-fadein {
+    from {
+        opacity: 0;
+        transform: translateY(4px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}

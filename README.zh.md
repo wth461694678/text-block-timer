@@ -4,8 +4,20 @@
 
 一个为Obsidian设计的文本块计时工具，可以在笔记中为任意文本行添加**正计时**功能。
 
-## 最新变更
-**外观优化**：增加计时器emoji自定义功能，现在你可以使用喜欢的图标来分别表示运行和暂停状态了
+## 最新变更 (V1.0.9)
+
+1. **重大Bug修复**：修复了 undo 历史污染问题 — 计时器的实时更新不再污染编辑器的撤销/重做历史栈。感谢 [mosmash](https://github.com/mosmash) 提供解决方案并提交 Pull Request！
+   - *什么是 undo 污染？* 此前，计时器每秒更新一次时间显示，每次更新都会被编辑器记录为一次文本变更。这导致按下 `Ctrl+Z` 撤销时，撤销的是计时器的更新而非用户的实际文本编辑，使得撤销功能在计时器运行期间几乎无法正常使用。
+2. **计时器外观优化**：重新设计了计时器渲染样式，外观更加简洁；移除了计时器标签前后多余的空格，显示更紧凑。新增隐藏小时数选项，针对较短耗时可以省略小时位显示（例如显示 `05:30` 而非 `00:05:30`）。
+3. **新功能：耗时调整**：新增 iPhone 风格的滚轮式时间选择器 UI，可通过右键菜单或命令面板快速调整计时器耗时，完全兼容移动端。
+
+**本次版本关闭的 Issue：**
+
+- [#12](https://github.com/wth461694678/text-block-timer/issues/12) \[Bug Report\] Text Block Timer: Ctrl+Z — 来自 [p0nczek](https://github.com/p0nczek)
+- [#11](https://github.com/wth461694678/text-block-timer/issues/11) \[Feedback/Suggestion\] Hiding HTML in Callouts & Custom Time Formatting — 来自 [p0nczek](https://github.com/p0nczek)
+- [#7](https://github.com/wth461694678/text-block-timer/issues/7) Hope to add the function of ending the timer — 来自 [kyle-one](https://github.com/kyle-one)
+
+> 🙏 在此对长时间未更新表示诚挚的歉意 — 由于工作和生活繁忙，更新中断了一段时间。感谢各位的耐心等待和持续支持！
 
 ## 功能特性
 
@@ -41,8 +53,6 @@
 2. ⭐️对于 `Task Plugin`用户而言，通过恰当的设置，只需要点击任务前的 [ ] 即可完成控制 ()
 
 ![controlbycheckbox](https://github.com/wth461694678/text-block-timer/blob/main/demo/controlbycheckbox.gif)
-
-
 
 ## 自定义设置
 
@@ -82,18 +92,19 @@
 在默认设置下，路径控制是关闭的。当你只希望在部分文件夹下使用该功能，你可以通过白名单或黑名单的方式进行控制，这两种方式只会生效其中一种。
 
 - 不控制：所有文件夹下都可以使用该功能
-![pathControl_no](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.gif)
-
+  ![pathControl_no](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_no.gif)
 - 白名单：只有在白名单中的文件夹下，才会生效
-![pathControl_white](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.gif)
-
+  ![pathControl_white](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_white.gif)
 - 黑名单：在黑名单中的文件夹下，不会生效
-![pathControl_black](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif)
-
-
-
+  ![pathControl_black](https://github.com/wth461694678/text-block-timer/blob/main/demo/pathControl_black.gif)
 
 ## 版本日志：
+
+- V1.0.9
+  1. **==重大Bug修复==**：修复了 undo 历史污染问题 — 计时器实时更新不再污染编辑器的撤销/重做历史栈。（感谢 [mosmash](https://github.com/mosmash) 提供修复 PR！）
+  2. **计时器外观优化**：重新设计计时器渲染样式，外观更简洁；新增隐藏小时数选项，针对较短耗时可省略小时位。
+  3. **==新功能==**：新增耗时调整功能，提供 iPhone 风格的滚轮式时间选择器 UI，可通过右键菜单和命令面板使用，完全兼容移动端。
+  4. 关闭的 Issue：[#12](https://github.com/wth461694678/text-block-timer/issues/12)、[#11](https://github.com/wth461694678/text-block-timer/issues/11)、[#7](https://github.com/wth461694678/text-block-timer/issues/7)
 - V1.0.8
   1. 外观优化：增加计时器emoji自定义功能，现在你可以使用喜欢的图标来分别表示运行和暂停状态了
 - V1.0.7
@@ -124,4 +135,4 @@
 ## 开发信息
 
 - 开发者: frankthwang
-- 版本: 1.0.8
+- 版本: 1.0.9

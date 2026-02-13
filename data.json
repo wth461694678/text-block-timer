@@ -12,6 +12,6 @@
   "timerDisplayStyle": "badge",
   "runningTextColor": "#10b981",
   "runningBgColor": "rgba(16, 185, 129, 0.15)",
-  "pausedTextColor": "#6b7280",
-  "pausedBgColor": "rgba(107, 114, 128, 0.12)"
+  "pausedTextColor": "#ffffff",
+  "pausedBgColor": "rgba(255, 255, 255, 0.12)"
 }

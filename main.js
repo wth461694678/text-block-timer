@@ -28,8 +28,8 @@ class TimerWidget extends WidgetType {
         const match = this.htmlText.match(/>([^<]*)<\/span>/);
         span.textContent = match ? match[1] : '[Timer]';
 
-        // Add hover title to show what it is
-        span.title = 'Timer (click to edit)';
+
+
 
         return span;
     }
@@ -435,7 +435,7 @@ class PerfMonitor {
 
             // TimerPlugin methods - wrap prototype methods after class is defined
             if (typeof TimerPlugin !== 'undefined') {
-                window.__PerfMonitor.wrapMethods(TimerPlugin.prototype, ['onload', 'onunload', 'onEditorMenu', 'onFileOpen', 'restoreTimers', 'handleStart', 'handlePause', 'handleContinue', 'handleDelete', 'onTick'], 'TimerPlugin');
+                window.__PerfMonitor.wrapMethods(TimerPlugin.prototype, ['onload', 'onunload', 'onEditorMenu', 'onFileOpen', 'restoreTimers', 'handleStart', 'handlePause', 'handleContinue', 'handleDelete', 'handleSetDuration', 'onTick'], 'TimerPlugin');
             }
 
             // console.log('[PerfMonitor] Core classes wrapped. Start session with PerfMonitorStart()');
@@ -462,11 +462,21 @@ const TRANSLATIONS = {
     en: {
         command_name: {
             toggle: "Toggle timer",
-            delete: "Delete timer"
+            delete: "Delete timer",
+            timeAdjust: "Time Adjustment"
         },
         action_start: "Start timer",
         action_paused: "Pause timer",
         action_continue: "Continue timer",
+        timeBackfill: {
+            menu: "Time Adjustment",
+            title: "Set Time Cost To",
+            disabledTip: "Only works on paused timers",
+            hours: "Hours",
+            minutes: "Minutes",
+            seconds: "Seconds",
+            save: "Save"
+        },
         settings: {
             name: "Text Block Timer Settings",
             desc: "Configure timer behavior",
@@ -576,11 +586,21 @@ const TRANSLATIONS = {
     zh: {
         command_name: {
             toggle: "启动计时器/切换计时器状态",
-            delete: "删除计时器"
+            delete: "删除计时器",
+            timeAdjust: "调整耗时"
         },
         action_start: "开始计时",
         action_paused: "暂停计时",
         action_continue: "继续计时",
+        timeBackfill: {
+            menu: "调整耗时",
+            title: "设定耗时为",
+            disabledTip: "仅对暂停中的计时器生效",
+            hours: "小时",
+            minutes: "分钟",
+            seconds: "秒",
+            save: "保存"
+        },
         settings: {
             name: "文本块计时器设置",
             desc: "配置计时器行为",
@@ -690,11 +710,21 @@ const TRANSLATIONS = {
     zhTW: {
         command_name: {
             toggle: "啟動計時器/切換計時器狀態",
-            delete: "刪除計時器"
+            delete: "刪除計時器",
+            timeAdjust: "調整耗時"
         },
         action_start: "開始計時",
         action_paused: "暫停計時",
         action_continue: "繼續計時",
+        timeBackfill: {
+            menu: "調整耗時",
+            title: "設定耗時為",
+            disabledTip: "僅對暫停中的計時器生效",
+            hours: "小時",
+            minutes: "分鐘",
+            seconds: "秒",
+            save: "保存"
+        },
         settings: {
             name: "文本塊計時器設定",
             desc: "配置計時器行為",
@@ -804,11 +834,21 @@ const TRANSLATIONS = {
     ja: {
         command_name: {
             toggle: "タイマーを始める/切替タイマ",
-            delete: "タイマーを削除"
+            delete: "タイマーを削除",
+            timeAdjust: "時間調整"
         },
         action_start: "タイマーを始める",
         action_paused: "タイマーを止める",
         action_continue: "タイマーを続ける",
+        timeBackfill: {
+            menu: "調整耗時",
+            title: "時間を設定",
+            disabledTip: "一時停止中のタイマーのみ有効",
+            hours: "時間",
+            minutes: "分",
+            seconds: "秒",
+            save: "保存"
+        },
         settings: {
             name: "テキストブロックタイマー設定",
             desc: "タイマーの動作を設定します",
@@ -918,11 +958,21 @@ const TRANSLATIONS = {
     ko: {
         command_name: {
             toggle: "타이머 시작/상태 전환",
-            delete: "타이머 삭제"
+            delete: "타이머 삭제",
+            timeAdjust: "시간 조정"
         },
         action_start: "타이머 시작",
         action_paused: "타이머 일시 정지",
         action_continue: "타이머 계속",
+        timeBackfill: {
+            menu: "시간 조정",
+            title: "시간 설정",
+            disabledTip: "일시정지된 타이머에서만 작동합니다",
+            hours: "시간",
+            minutes: "분",
+            seconds: "초",
+            save: "저장"
+        },
         settings: {
             name: "텍스트 블록 타이머 설정",
             desc: "타이머 동작 설정",
@@ -1097,6 +1147,17 @@ class TimerDataUpdater {
                 };
                 break;
 
+            case 'setDuration':
+                // Set timer to a specific duration (in seconds)
+                // oldData.newDur is passed as the target duration
+                newData = {
+                    ...oldData,
+                    dur: oldData.newDur,
+                    newDur: undefined
+                };
+                delete newData.newDur;
+                break;
+
             default:
                 newData = oldData;
                 break;
@@ -1266,11 +1327,11 @@ class TimerFileManager {
                     this.settings.timerInsertLocation
                 );
                 if (position.before === 0) {
-                    lines[lineNum] = newSpan + ' ' + line;
+                    lines[lineNum] = newSpan + line;
                 } else if (position.before === line.length) {
-                    lines[lineNum] = line + ' ' + newSpan;
+                    lines[lineNum] = line + newSpan;
                 } else {
-                    lines[lineNum] = line.substring(0, position.before) + ' ' + newSpan + ' ' + line.substring(position.before);
+                    lines[lineNum] = line.substring(0, position.before) + newSpan + line.substring(position.before);
                 }
                 modified = true;
             }
@@ -1296,8 +1357,6 @@ class TimerFileManager {
 
             // 3. Determine insertion position
             let before, after;
-            let needsSpacing = false;
-
             if (parsedResult && parsedResult.timerId === timerId) {
                 // Update existing timer
                 before = parsedResult.beforeIndex;
@@ -1311,11 +1370,10 @@ class TimerFileManager {
                 );
                 before = position.before;
                 after = position.after;
-                needsSpacing = true; // New timer needs spacing
             }
 
-            // 4. Add spacing for new timers
-            const finalSpan = needsSpacing ? ' ' + newSpan + ' ' : newSpan;
+            // 4. Prepare final span (no extra spacing)
+            const finalSpan = newSpan;
 
             // 5. Execute write
             if (editor.cm && editor.cm.dispatch) {
@@ -1709,6 +1767,34 @@ class TimerPlugin extends obsidian.Plugin {
             },
         });
 
+        // Register "Time Adjustment" command
+        this.addCommand({
+            id: 'time-adjustment',
+            icon: 'clock',
+            name: getTranslation('command_name').timeAdjust,
+            editorCallback: (editor, view) => {
+                const cursor = editor.getCursor();
+                const lineNum = cursor.line;
+                const lineText = editor.getLine(lineNum);
+                const parsed = TimerParser.parse(lineText, 'auto');
+
+                if (parsed && parsed.class === 'timer-p') {
+                    const backfillLang = getTranslation('timeBackfill');
+                    const modal = new TimePickerModal(
+                        this.app,
+                        parsed.dur,
+                        backfillLang,
+                        (newDur) => this.handleSetDuration(view, lineNum, parsed, newDur)
+                    );
+                    modal.open();
+                } else if (parsed) {
+                    new obsidian.Notice(getTranslation('timeBackfill').disabledTip);
+                } else {
+                    new obsidian.Notice(getTranslation('timeBackfill').disabledTip);
+                }
+            },
+        });
+
         // Listen to file open event
         this.registerEvent(
             this.app.workspace.on('file-open', this.onFileOpen.bind(this))
@@ -1852,6 +1938,9 @@ class TimerPlugin extends obsidian.Plugin {
         const parsed = TimerParser.parse(lineText, 'auto');
         const className = parsed ? parsed.class : null;
 
+        // --- Timer section separator ---
+        menu.addSeparator();
+
         if (className === 'timer-r') {
             menu.addItem((item) =>
                 item
@@ -1879,11 +1968,56 @@ class TimerPlugin extends obsidian.Plugin {
         if (parsed && parsed.timerId) {
             menu.addItem((item) =>
                 item
-                .setTitle('Delete timer')
+                .setTitle(getTranslation('command_name').delete)
                 .setIcon('trash')
                 .onClick(() => this.handleDelete(view, lineNum, parsed))
             );
         }
+
+        // Add time backfill option
+        const backfillLang = getTranslation('timeBackfill');
+        const isPaused = className === 'timer-p';
+
+        menu.addItem((item) => {
+            item
+                .setTitle(backfillLang.menu)
+                .setIcon('clock');
+            if (isPaused) {
+                item.onClick(() => {
+                    const modal = new TimePickerModal(
+                        this.app,
+                        parsed.dur,
+                        backfillLang,
+                        (newDur) => this.handleSetDuration(view, lineNum, parsed, newDur)
+                    );
+                    modal.open();
+                });
+            } else {
+                item.setDisabled(true);
+                item.dom.addClass('timer-menu-disabled');
+                // Custom tooltip with 100ms delay
+                let tipEl = null;
+                let tipTimer = null;
+                item.dom.addEventListener('mouseenter', () => {
+                    tipTimer = setTimeout(() => {
+                        tipEl = document.createElement('div');
+                        tipEl.className = 'timer-menu-tooltip';
+                        tipEl.textContent = backfillLang.disabledTip;
+                        document.body.appendChild(tipEl);
+                        const rect = item.dom.getBoundingClientRect();
+                        tipEl.style.top = `${rect.top - tipEl.offsetHeight - 4}px`;
+                        tipEl.style.left = `${rect.left + rect.width / 2 - tipEl.offsetWidth / 2}px`;
+                    }, 100);
+                });
+                item.dom.addEventListener('mouseleave', () => {
+                    clearTimeout(tipTimer);
+                    if (tipEl) {
+                        tipEl.remove();
+                        tipEl = null;
+                    }
+                });
+            }
+        });
     }
 
     checkPathRestriction() {
@@ -1968,8 +2102,27 @@ class TimerPlugin extends obsidian.Plugin {
         // 3. Remove from text (only in edit mode)
         if (view.getMode() === 'source') {
             const editor = view.editor;
+            const lineText = editor.getLine(lineNum);
+            let delFrom = parsedData.beforeIndex;
+            let delTo = parsedData.afterIndex;
+
+            // Clean up adjacent spaces left from old spacing logic:
+            // If both sides have a space, remove one of them to avoid double space
+            const charBefore = delFrom > 0 ? lineText[delFrom - 1] : null;
+            const charAfter = delTo < lineText.length ? lineText[delTo] : null;
+            if (charBefore === ' ' && charAfter === ' ') {
+                // Both sides have space, remove one extra space
+                delTo += 1;
+            } else if (charBefore === ' ' && delTo >= lineText.length) {
+                // Space before and timer is at end of line, remove trailing space
+                delFrom -= 1;
+            } else if (delFrom === 0 && charAfter === ' ') {
+                // Timer is at start of line and space after, remove leading space
+                delTo += 1;
+            }
+
             editor.replaceRange(
-                '', { line: lineNum, ch: parsedData.beforeIndex }, { line: lineNum, ch: parsedData.afterIndex }
+                '', { line: lineNum, ch: delFrom }, { line: lineNum, ch: delTo }
             );
         }
     }
@@ -1995,6 +2148,20 @@ class TimerPlugin extends obsidian.Plugin {
         const newData = TimerDataUpdater.calculate('forcepause', parsedData);
 
         // Update file only (don't start timer)
+        this.fileManager.writeTimer(timerId, newData, view, view.file, lineNum, parsedData);
+    }
+
+    handleSetDuration(view, lineNum, parsedData, newDur) {
+        if (!parsedData || !parsedData.timerId) return;
+        if (parsedData.class !== 'timer-p') return; // Only works on paused timers
+
+        const timerId = parsedData.timerId;
+        const newData = TimerDataUpdater.calculate('setDuration', {
+            ...parsedData,
+            newDur: newDur
+        });
+
+        // Update file
         this.fileManager.writeTimer(timerId, newData, view, view.file, lineNum, parsedData);
     }
 
@@ -2192,6 +2359,301 @@ class TimerPlugin extends obsidian.Plugin {
     }
 }
 
+// —— Time Picker Modal - iPhone-style scroll wheel time picker —— //
+class TimePickerModal extends obsidian.Modal {
+    constructor(app, currentDur, lang, onSubmit) {
+        super(app);
+        this.currentDur = currentDur || 0;
+        this.lang = lang;
+        this.onSubmit = onSubmit;
+        this.ITEM_HEIGHT = 36;
+        this.VISIBLE_COUNT = 5; // number of visible items in the wheel
+    }
+
+    onOpen() {
+        const { contentEl, modalEl } = this;
+        modalEl.addClass('timer-picker-modal');
+        contentEl.empty();
+
+        // Parse current duration
+        const curH = Math.min(999, Math.floor(this.currentDur / 3600));
+        const curM = Math.floor((this.currentDur % 3600) / 60);
+        const curS = this.currentDur % 60;
+
+        // Header bar: Title only (centered)
+        const header = contentEl.createEl('div', { cls: 'timer-picker-header' });
+        header.createEl('span', { text: this.lang.title, cls: 'timer-picker-title' });
+
+        // Wheel container
+        const wheelContainer = contentEl.createEl('div', { cls: 'timer-picker-wheels' });
+
+        // Selection highlight band - position dynamically based on item height
+        const highlightEl = wheelContainer.createEl('div', { cls: 'timer-picker-highlight' });
+        const centerOffset = Math.floor(this.VISIBLE_COUNT / 2) * this.ITEM_HEIGHT;
+        highlightEl.style.top = `${centerOffset - 1}px`;
+        highlightEl.style.height = `${this.ITEM_HEIGHT + 2}px`;
+
+        // Create 3 wheels: hours (0-999), minutes (0-59 circular), seconds (0-59 circular)
+        this.hourWheel = this._createWheel(wheelContainer, 1000, curH, null, false);
+
+        // Colon separator between hours and minutes
+        const colon1 = wheelContainer.createEl('div', { cls: 'timer-picker-colon' });
+        colon1.textContent = ':';
+        colon1.style.top = `${centerOffset}px`;
+
+        this.minuteWheel = this._createWheel(wheelContainer, 60, curM, null, true);
+
+        // Colon separator between minutes and seconds
+        const colon2 = wheelContainer.createEl('div', { cls: 'timer-picker-colon' });
+        colon2.textContent = ':';
+        colon2.style.top = `${centerOffset}px`;
+
+        this.secondWheel = this._createWheel(wheelContainer, 60, curS, null, true);
+
+        // Footer: Save button (flat green checkmark)
+        const footer = contentEl.createEl('div', { cls: 'timer-picker-footer' });
+        const saveBtn = footer.createEl('button', { text: '✓', cls: 'timer-picker-save-btn' });
+
+        // Events
+        saveBtn.addEventListener('click', () => {
+            const h = this.hourWheel.getValue();
+            const m = this.minuteWheel.getValue();
+            const s = this.secondWheel.getValue();
+            this.onSubmit(h * 3600 + m * 60 + s);
+            this.close();
+        });
+    }
+
+    _createWheel(parent, count, initialValue, label, circular) {
+        const ITEM_HEIGHT = this.ITEM_HEIGHT;
+        const VISIBLE = this.VISIBLE_COUNT;
+        const PADDING = Math.floor(VISIBLE / 2); // items above/below center
+        const isCircular = !!circular;
+
+        const col = parent.createEl('div', { cls: 'timer-picker-column' });
+
+        // Scroll wrapper
+        const viewport = col.createEl('div', { cls: 'timer-picker-viewport' });
+        viewport.style.height = `${ITEM_HEIGHT * VISIBLE}px`;
+
+        const list = viewport.createEl('div', { cls: 'timer-picker-list' });
+
+        // For circular mode, we create a large virtual list (count * REPEAT_COUNT)
+        // so that the user can scroll continuously in both directions.
+        const REPEAT_COUNT = isCircular ? 21 : 1; // odd number for symmetry
+        const totalItems = count * REPEAT_COUNT;
+        const midRepeatStart = isCircular ? Math.floor(REPEAT_COUNT / 2) * count : 0;
+
+        const items = [];
+        if (isCircular) {
+            // Circular: repeat values, with PADDING empty slots at top/bottom
+            for (let i = -PADDING; i < totalItems + PADDING; i++) {
+                const item = list.createEl('div', { cls: 'timer-picker-item' });
+                item.style.height = `${ITEM_HEIGHT}px`;
+                item.style.lineHeight = `${ITEM_HEIGHT}px`;
+                if (i >= 0 && i < totalItems) {
+                    const val = i % count;
+                    item.textContent = String(val).padStart(2, '0');
+                    item.dataset.value = val;
+                } else {
+                    item.textContent = '';
+                    item.dataset.value = '';
+                }
+                items.push(item);
+            }
+        } else {
+            // Non-circular (hours): simple list with padding
+            for (let i = -PADDING; i < count + PADDING; i++) {
+                const item = list.createEl('div', { cls: 'timer-picker-item' });
+                item.style.height = `${ITEM_HEIGHT}px`;
+                item.style.lineHeight = `${ITEM_HEIGHT}px`;
+                if (i >= 0 && i < count) {
+                    item.textContent = String(i).padStart(2, '0');
+                    item.dataset.value = i;
+                } else {
+                    item.textContent = '';
+                    item.dataset.value = '';
+                }
+                items.push(item);
+            }
+        }
+
+        // State
+        // For circular mode, start in the middle repeat set
+        let currentIndex = isCircular ? (midRepeatStart + initialValue) : initialValue;
+        let offset = -currentIndex * ITEM_HEIGHT;
+        let startY = 0;
+        let startOffset = 0;
+        let isDragging = false;
+        let lastY = 0;
+        let velocity = 0;
+        let lastTime = 0;
+        let animFrame = null;
+
+        const setTransform = (y) => {
+            list.style.transform = `translateY(${y}px)`;
+        };
+
+        const maxIndex = isCircular ? (totalItems - 1) : (count - 1);
+
+        const snapTo = (index, animate) => {
+            index = Math.max(0, Math.min(maxIndex, index));
+            currentIndex = index;
+            offset = -index * ITEM_HEIGHT;
+            if (animate) {
+                list.style.transition = 'transform 0.3s cubic-bezier(0.23, 1, 0.32, 1)';
+                setTransform(offset);
+                setTimeout(() => {
+                    list.style.transition = '';
+                    // After snap animation, silently re-center if circular
+                    if (isCircular) {
+                        const val = currentIndex % count;
+                        const recentered = midRepeatStart + val;
+                        if (Math.abs(currentIndex - recentered) > count) {
+                            currentIndex = recentered;
+                            offset = -currentIndex * ITEM_HEIGHT;
+                            setTransform(offset);
+                        }
+                    }
+                }, 300);
+            } else {
+                setTransform(offset);
+            }
+            updateStyles();
+        };
+
+        const updateStyles = () => {
+            items.forEach((el, i) => {
+                const realIndex = i - PADDING;
+                const distance = Math.abs(realIndex - currentIndex);
+                if (distance === 0) {
+                    el.style.opacity = '1';
+                    el.style.fontSize = '20px';
+                    el.style.fontWeight = '700';
+                    el.style.color = 'var(--text-normal)';
+                } else if (distance === 1) {
+                    el.style.opacity = '0.6';
+                    el.style.fontSize = '16px';
+                    el.style.fontWeight = '400';
+                    el.style.color = 'var(--text-muted)';
+                } else if (distance === 2) {
+                    el.style.opacity = '0.3';
+                    el.style.fontSize = '14px';
+                    el.style.fontWeight = '400';
+                    el.style.color = 'var(--text-faint)';
+                } else {
+                    el.style.opacity = '0';
+                    el.style.fontSize = '12px';
+                    el.style.fontWeight = '400';
+                    el.style.color = 'var(--text-faint)';
+                }
+            });
+        };
+
+        // Touch/mouse handlers
+        const onStart = (y) => {
+            if (animFrame) {
+                cancelAnimationFrame(animFrame);
+                animFrame = null;
+            }
+            list.style.transition = '';
+            isDragging = true;
+            startY = y;
+            startOffset = offset;
+            lastY = y;
+            velocity = 0;
+            lastTime = Date.now();
+        };
+
+        const onMove = (y) => {
+            if (!isDragging) return;
+            const now = Date.now();
+            const dt = now - lastTime;
+            if (dt > 0) {
+                velocity = (y - lastY) / dt;
+            }
+            lastY = y;
+            lastTime = now;
+            offset = startOffset + (y - startY);
+            setTransform(offset);
+
+            // Update live style
+            const approxIndex = Math.round(-offset / ITEM_HEIGHT);
+            const clampedIndex = Math.max(0, Math.min(maxIndex, approxIndex));
+            if (clampedIndex !== currentIndex) {
+                currentIndex = clampedIndex;
+                updateStyles();
+            }
+        };
+
+        const onEnd = () => {
+            if (!isDragging) return;
+            isDragging = false;
+
+            // Momentum / inertia
+            const momentumDistance = velocity * 150; // px
+            const targetOffset = offset + momentumDistance;
+            let targetIndex = Math.round(-targetOffset / ITEM_HEIGHT);
+            targetIndex = Math.max(0, Math.min(maxIndex, targetIndex));
+            snapTo(targetIndex, true);
+        };
+
+        // Mouse events
+        viewport.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            onStart(e.clientY);
+            const onMouseMove = (ev) => onMove(ev.clientY);
+            const onMouseUp = () => {
+                onEnd();
+                document.removeEventListener('mousemove', onMouseMove);
+                document.removeEventListener('mouseup', onMouseUp);
+            };
+            document.addEventListener('mousemove', onMouseMove);
+            document.addEventListener('mouseup', onMouseUp);
+        });
+
+        // Touch events (mobile support)
+        viewport.addEventListener('touchstart', (e) => {
+            onStart(e.touches[0].clientY);
+        }, { passive: true });
+        viewport.addEventListener('touchmove', (e) => {
+            e.preventDefault();
+            onMove(e.touches[0].clientY);
+        }, { passive: false });
+        viewport.addEventListener('touchend', () => onEnd());
+
+        // Click to select
+        viewport.addEventListener('click', (e) => {
+            const rect = viewport.getBoundingClientRect();
+            const clickY = e.clientY - rect.top;
+            const clickedSlot = Math.floor(clickY / ITEM_HEIGHT); // 0-based slot in viewport
+            const targetIndex = currentIndex + (clickedSlot - PADDING);
+            if (targetIndex >= 0 && targetIndex <= maxIndex) {
+                snapTo(targetIndex, true);
+            }
+        });
+
+        // Scroll wheel
+        viewport.addEventListener('wheel', (e) => {
+            e.preventDefault();
+            const direction = e.deltaY > 0 ? 1 : -1;
+            const targetIndex = Math.max(0, Math.min(maxIndex, currentIndex + direction));
+            snapTo(targetIndex, true);
+        }, { passive: false });
+
+        // Initial position
+        snapTo(initialValue, false);
+
+        return {
+            getValue: () => isCircular ? (currentIndex % count) : currentIndex
+        };
+    }
+
+    onClose() {
+        this.contentEl.empty();
+    }
+}
+
 class TimerSettingTab extends obsidian.PluginSettingTab {
     constructor(app, plugin) {
         super(app, plugin);
@@ -2231,25 +2693,26 @@ class TimerSettingTab extends obsidian.PluginSettingTab {
         const lang = getTranslation('settings');
 
         containerEl.createEl('h1', { text: lang.name });
-        containerEl.createEl('h2', { text: lang.desc });
-        containerEl.createEl('div', { text: '' });
 
-        const tutorialInfo = containerEl.createEl('div');
-        tutorialInfo.addClass('tutorial-info');
+        // Plugin introduction block
+        const introBlock = containerEl.createEl('div', { cls: 'timer-plugin-intro' });
+        introBlock.style.cssText = 'background: var(--background-secondary); border-radius: 8px; padding: 12px 16px; margin: 8px 0 16px 0; font-size: 13px; line-height: 1.8; color: var(--text-muted);';
 
-        const tutorialParagraph = tutorialInfo.createEl('p');
-        tutorialParagraph.setText(lang.tutorial);
-
-        const tutorialLink = tutorialParagraph.createEl('a');
+        const tutorialLine = introBlock.createEl('p');
+        tutorialLine.style.cssText = 'margin: 0 0 4px 0;';
+        tutorialLine.appendText(lang.tutorial);
+        const tutorialLink = tutorialLine.createEl('a');
         tutorialLink.href = 'https://github.com/wth461694678/text-block-timer';
         tutorialLink.setText('GitHub');
         tutorialLink.target = '_blank';
 
-        containerEl.createEl('div', { text: '' });
-        containerEl.createEl('p', { text: lang.askforvote });
+        const voteLine = introBlock.createEl('p');
+        voteLine.style.cssText = 'margin: 0 0 4px 0;';
+        voteLine.setText(lang.askforvote);
 
-        containerEl.createEl('div', { text: '' });
-        containerEl.createEl('p', { text: lang.issue });
+        const issueLine = introBlock.createEl('p');
+        issueLine.style.cssText = 'margin: 0;';
+        issueLine.setText(lang.issue);
 
         containerEl.createEl('h3', { text: lang.sections.basic.name });
 
