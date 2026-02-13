@@ -2,11 +2,205 @@
 
 const obsidian = require('obsidian');
 
-const { EditorView } = require('@codemirror/view');
-const { Transaction } = require('@codemirror/state');
+const { EditorView, Decoration, WidgetType } = require('@codemirror/view');
+const { Transaction, RangeSetBuilder, StateField, StateEffect } = require('@codemirror/state');
+const { syntaxTree } = require('@codemirror/language');
+const { keymap } = require('@codemirror/view');
 
-// Regex constants
+// —— Timer Widget: Display folded timer span —— //
+class TimerWidget extends WidgetType {
+    constructor(htmlText, startPos, endPos) {
+        super();
+        this.htmlText = htmlText;
+        this.startPos = startPos;
+        this.endPos = endPos;
+    }
+
+    toDOM() {
+        const span = document.createElement('span');
+        span.className = 'timer-widget-display';
+
+        // Extract visible content from HTML (【⏳00:00:00 】)
+        const match = this.htmlText.match(/>([^<]*)<\/span>/);
+        span.textContent = match ? match[1] : '[Timer]';
+
+        // Add hover title to show what it is
+        span.title = 'Timer (click to edit)';
+
+        return span;
+    }
+
+    ignoreEvent(event) {
+        // Don't ignore events - let them propagate for proper handling
+        return false;
+    }
+}
+
+// —— Timer Span Folding Field —— //
+const timerFoldingField = StateField.define({
+    create(state) {
+        return buildTimerFolding(state);
+    },
+
+    update(decorations, tr) {
+        if (tr.docChanged) {
+            return buildTimerFolding(tr.state);
+        }
+        return decorations.map(tr.changes);
+    }
+});
+
+function buildTimerFolding(state) {
+    const builder = new RangeSetBuilder();
+    const timerRegex = /<span\s+class="timer-[rp]"\s+id="[^"]*"\s+data-dur="[^"]*"\s+data-ts="[^"]*">【[^<]*】<\/span>/g;
+
+    for (let pos = 0; pos < state.doc.length;) {
+        const line = state.doc.lineAt(pos);
+        const lineText = line.text;
+
+        let match;
+        timerRegex.lastIndex = 0;
+        while ((match = timerRegex.exec(lineText)) !== null) {
+            const start = line.from + match.index;
+            const end = start + match[0].length;
+            const htmlText = match[0];
+
+            // Replace the entire HTML span with a widget that acts as an atomic unit
+            builder.add(start, end, Decoration.replace({
+                widget: new TimerWidget(htmlText, start, end),
+                inclusive: true,
+                block: false,
+                side: 1 // Position cursor after the widget
+            }));
+        }
+
+        pos = line.to + 1;
+    }
+
+    return builder.finish();
+}
+
+// —— Timer Widget Keymap Handler —— //
+const timerWidgetKeymap = keymap.of([{
+        key: 'Backspace',
+        run(view) {
+            const { state, dispatch } = view;
+            const pos = state.selection.main.head;
+
+            // Check if cursor is right after a timer widget
+            const line = state.doc.lineAt(pos);
+            const timerRegex = /<span\s+class="timer-[rp]"\s+id="[^"]*"\s+data-dur="[^"]*"\s+data-ts="[^"]*">【[^<]*】<\/span>/g;
+
+            let match;
+            timerRegex.lastIndex = 0;
+            while ((match = timerRegex.exec(line.text)) !== null) {
+                const spanStart = line.from + match.index;
+                const spanEnd = spanStart + match[0].length;
+
+                // If cursor is right after timer, delete the entire timer
+                if (pos === spanEnd) {
+                    dispatch(state.update({
+                        changes: { from: spanStart, to: spanEnd, insert: '' }
+                    }));
+                    return true;
+                }
+            }
+
+            return false; // Let default behavior handle it
+        }
+    },
+    {
+        key: 'Delete',
+        run(view) {
+            const { state, dispatch } = view;
+            const pos = state.selection.main.head;
+
+            // Check if cursor is right before a timer widget
+            const line = state.doc.lineAt(pos);
+            const timerRegex = /<span\s+class="timer-[rp]"\s+id="[^"]*"\s+data-dur="[^"]*"\s+data-ts="[^"]*">【[^<]*】<\/span>/g;
+
+            let match;
+            timerRegex.lastIndex = 0;
+            while ((match = timerRegex.exec(line.text)) !== null) {
+                const spanStart = line.from + match.index;
+                const spanEnd = spanStart + match[0].length;
+
+                // If cursor is right before timer, delete the entire timer
+                if (pos === spanStart) {
+                    dispatch(state.update({
+                        changes: { from: spanStart, to: spanEnd, insert: '' }
+                    }));
+                    return true;
+                }
+            }
+
+            return false; // Let default behavior handle it
+        }
+    },
+    {
+        key: 'ArrowLeft',
+        run(view) {
+            const { state, dispatch } = view;
+            const pos = state.selection.main.head;
+
+            // Check if cursor is at or inside a timer widget
+            const line = state.doc.lineAt(pos);
+            const timerRegex = /<span\s+class="timer-[rp]"\s+id="[^"]*"\s+data-dur="[^"]*"\s+data-ts="[^"]*">【[^<]*】<\/span>/g;
+
+            let match;
+            timerRegex.lastIndex = 0;
+            while ((match = timerRegex.exec(line.text)) !== null) {
+                const spanStart = line.from + match.index;
+                const spanEnd = spanStart + match[0].length;
+
+                // If cursor is within timer span, jump to before it
+                if (pos > spanStart && pos <= spanEnd) {
+                    dispatch(state.update({
+                        selection: { anchor: spanStart }
+                    }));
+                    return true;
+                }
+            }
+
+            return false; // Let default behavior handle it
+        }
+    },
+    {
+        key: 'ArrowRight',
+        run(view) {
+            const { state, dispatch } = view;
+            const pos = state.selection.main.head;
+
+            // Check if cursor is at or inside a timer widget
+            const line = state.doc.lineAt(pos);
+            const timerRegex = /<span\s+class="timer-[rp]"\s+id="[^"]*"\s+data-dur="[^"]*"\s+data-ts="[^"]*">【[^<]*】<\/span>/g;
+
+            let match;
+            timerRegex.lastIndex = 0;
+            while ((match = timerRegex.exec(line.text)) !== null) {
+                const spanStart = line.from + match.index;
+                const spanEnd = spanStart + match[0].length;
+
+                // If cursor is within timer span, jump to after it
+                if (pos >= spanStart && pos < spanEnd) {
+                    dispatch(state.update({
+                        selection: { anchor: spanEnd }
+                    }));
+                    return true;
+                }
+            }
+
+            return false; // Let default behavior handle it
+        }
+    }
+]);
+
+// —— Regex constants —— //
 const UPDATE_INTERVAL = 1000;
+
+// —— Base62 工具函数常量 —— //
+const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
+
 // —— Checkbox regexes —— //
 const ORDERED_LIST = /(^\s*#*\d+\.\s)/
 const UNORDERED_LIST = /(^\s*#*[-/+/*]\s)/
@@ -14,10 +208,8 @@ const HEADER = /(^\s*#+\s)/
 const POTENTIAL_CHECKBOX_REGEX = /^(?:(\s*)(?:[-+*]|\d+\.)\s+)\[(.{0,2})\]/
 const CHECKBOX_REGEX = /^(?:(\s*)(?:[-+*]|\d+\.)\s+)\[(.{1})\]\s+/
 
-// —— Base62 工具函数 —— //
-const BASE62_CHARS = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
-
 const DEBUG = false;
+
 
 // Performance monitor: lightweight sync/async timing collector
 class PerfMonitor {
@@ -1376,6 +1568,19 @@ class TimerPlugin extends obsidian.Plugin {
 
         // Register settings
         this.addSettingTab(new TimerSettingTab(this.app, this));
+
+        // Register timer folding decoration to hide HTML in edit mode
+        this.registerEditorExtension([
+            timerFoldingField,
+            EditorView.decorations.of((view) => {
+                try {
+                    return view.state.field(timerFoldingField);
+                } catch (e) {
+                    return null;
+                }
+            }),
+            timerWidgetKeymap
+        ]);
 
         // Judge enableCheckboxToTimer
         this.registerEditorExtension(

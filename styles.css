@@ -1,3 +1,27 @@
 .timer-r {
     color: #10b981;
 }
+
+
+/* Timer widget display in edit mode */
+
+.timer-widget-display {
+    display: inline-block;
+    padding: 0 4px;
+    margin: 0 2px;
+    border-radius: 3px;
+    background-color: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    font-weight: 500;
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    font-family: system-ui, -apple-system, sans-serif;
+    font-size: 0.95em;
+    transition: background-color 0.2s ease;
+}
+
+.timer-widget-display:hover {
+    background-color: rgba(16, 185, 129, 0.25);
+    border-color: rgba(16, 185, 129, 0.5);
+}
