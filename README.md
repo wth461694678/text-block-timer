@@ -7,12 +7,12 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 ## Latest Change (V1.0.9)
 
 1. **Critical Bug Fix**: Fixed undo history pollution issue — timer updates no longer affect undo/redo(Thanks to [mosmash](https://github.com/mosmash) for providing the solution and submitting a Pull Request!)
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_undostack_fix.gif" width="400px">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_undostack_fix.gif">
 
 
 2. **Timer Style Optimization**: Redesigned timer appearance with cleaner display and option to hide hours digit.
 3. **New Feature: Time Adjustment**: Added iPhone-style scroll wheel time picker UI for adjusting durations.
-<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_smartformat_timeadjust_colorsettings.gif" width="400px">
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_smartformat_timeadjust_colorsettings.gif">
 
 **Closed Issues in this release:**
 
