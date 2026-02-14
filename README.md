@@ -6,13 +6,16 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 
 ## Latest Change (V1.0.9)
 
-1. **Critical Bug Fix**: Fixed undo history pollution issue — timer updates no longer affect undo/redo(Thanks to [mosmash](https://github.com/mosmash) for providing the solution and submitting a Pull Request!)
+1. **Code Encapsulation**: Timer is now encapsulated and no longer exposes internal HTML code.
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_hidecode.gif">
+
+2. **Fixed Undo History Pollution**: Timer updates no longer affect undo/redo(Thanks to [mosmash](https://github.com/mosmash) for providing the solution and submitting a Pull Request!)
 <img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_undostack_fix.gif">
 
-
-2. **Timer Style Optimization**: Redesigned timer appearance with cleaner display and option to hide hours digit.
-3. **New Feature: Time Adjustment**: Added iPhone-style scroll wheel time picker UI for adjusting durations.
+3. **Timer Style Optimization**: Redesigned timer appearance with cleaner display and option to hide hours digit.
+4. **New Feature: Time Adjustment**: Added iPhone-style scroll wheel time picker UI for adjusting durations.
 <img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_smartformat_timeadjust_colorsettings.gif">
+
 
 **Closed Issues in this release:**
 
@@ -106,7 +109,8 @@ In the default settings, path control is disabled. When you only want to use the
   1. **==Critical Bug Fix==**: Fixed the undo history pollution issue — timer real-time updates no longer pollute the editor's undo/redo stack. (Thanks to [mosmash](https://github.com/mosmash) for providing the solution and submitting a Pull Request!)
   2. **Timer Style Optimization**: Redesigned the timer rendering style; added option to hide hours digit for shorter durations.
   3. **==New Feature==**: Added Time Adjustment function with an iPhone-style scroll wheel time picker UI, accessible via right-click menu and command palette, fully compatible with mobile.
-  4. Closed issues: [#12](https://github.com/wth461694678/text-block-timer/issues/12), [#11](https://github.com/wth461694678/text-block-timer/issues/11), [#7](https://github.com/wth461694678/text-block-timer/issues/7)
+  4. **==Code Encapsulation==**: Timer is now encapsulated and no longer exposes internal HTML code.
+  5. Closed issues: [#12](https://github.com/wth461694678/text-block-timer/issues/12), [#11](https://github.com/wth461694678/text-block-timer/issues/11), [#7](https://github.com/wth461694678/text-block-timer/issues/7)
 - V1.0.8
   1. Appearance optimization: Added a timer emoji customization function. Now you can use your favorite ICONS to represent the running and paused states respectively.
 - V1.0.7

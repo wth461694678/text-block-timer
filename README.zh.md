@@ -6,11 +6,14 @@
 
 ## 最新变更 (V1.0.9)
 
-1. **重大Bug修复**：修复了 undo 历史污染问题 — 计时器的实时更新不再污染编辑器的撤销/重做历史栈。感谢 [mosmash](https://github.com/mosmash) 提供解决方案并提交 Pull Request！
+1. **代码封装**：计时器现在被封装起来，不会再暴露出内部的HTML代码。
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_hidecode.gif">
+
+2. **修复了 undo 历史污染问题**：计时器的实时更新不再污染编辑器的撤销/重做历史栈。感谢 [mosmash](https://github.com/mosmash) 提供解决方案并提交 Pull Request！
 <img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_undostack_fix.gif">
 
-2. **计时器外观优化**：重新设计了计时器渲染样式，外观更加简洁；移除了计时器标签前后多余的空格，显示更紧凑。新增隐藏小时数选项，针对较短耗时可以省略小时位显示（例如显示 `05:30` 而非 `00:05:30`）。
-3. **新功能：耗时调整**：新增 iPhone 风格的滚轮式时间选择器 UI，可通过右键菜单或命令面板快速调整计时器耗时，完全兼容移动端。
+3. **计时器外观优化**：重新设计了计时器渲染样式，外观更加简洁；移除了计时器标签前后多余的空格，显示更紧凑。新增隐藏小时数选项，针对较短耗时可以省略小时位显示（例如显示 `05:30` 而非 `00:05:30`）。
+4. **新功能：耗时调整**：新增 iPhone 风格的滚轮式时间选择器 UI，可通过右键菜单或命令面板快速调整计时器耗时，完全兼容移动端。
 <img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_smartformat_timeadjust_colorsettings.gif">
 
 **本次版本关闭的 Issue：**
@@ -106,7 +109,8 @@
   1. **==重大Bug修复==**：修复了 undo 历史污染问题 — 计时器实时更新不再污染编辑器的撤销/重做历史栈。（感谢 [mosmash](https://github.com/mosmash) 提供修复 PR！）
   2. **计时器外观优化**：重新设计计时器渲染样式，外观更简洁；新增隐藏小时数选项，针对较短耗时可省略小时位。
   3. **==新功能==**：新增耗时调整功能，提供 iPhone 风格的滚轮式时间选择器 UI，可通过右键菜单和命令面板使用，完全兼容移动端。
-  4. 关闭的 Issue：[#12](https://github.com/wth461694678/text-block-timer/issues/12)、[#11](https://github.com/wth461694678/text-block-timer/issues/11)、[#7](https://github.com/wth461694678/text-block-timer/issues/7)
+  4. **==代码封装==**：计时器现在被封装起来，不会再暴露出内部的HTML代码。
+  5. 关闭的 Issue：[#12](https://github.com/wth461694678/text-block-timer/issues/12)、[#11](https://github.com/wth461694678/text-block-timer/issues/11)、[#7](https://github.com/wth461694678/text-block-timer/issues/7)
 - V1.0.8
   1. 外观优化：增加计时器emoji自定义功能，现在你可以使用喜欢的图标来分别表示运行和暂停状态了
 - V1.0.7
