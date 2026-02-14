@@ -7,9 +7,11 @@
 ## 最新变更 (V1.0.9)
 
 1. **重大Bug修复**：修复了 undo 历史污染问题 — 计时器的实时更新不再污染编辑器的撤销/重做历史栈。感谢 [mosmash](https://github.com/mosmash) 提供解决方案并提交 Pull Request！
-   - *什么是 undo 污染？* 此前，计时器每秒更新一次时间显示，每次更新都会被编辑器记录为一次文本变更。这导致按下 `Ctrl+Z` 撤销时，撤销的是计时器的更新而非用户的实际文本编辑，使得撤销功能在计时器运行期间几乎无法正常使用。
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_undostack_fix.gif" width="400px">
+
 2. **计时器外观优化**：重新设计了计时器渲染样式，外观更加简洁；移除了计时器标签前后多余的空格，显示更紧凑。新增隐藏小时数选项，针对较短耗时可以省略小时位显示（例如显示 `05:30` 而非 `00:05:30`）。
 3. **新功能：耗时调整**：新增 iPhone 风格的滚轮式时间选择器 UI，可通过右键菜单或命令面板快速调整计时器耗时，完全兼容移动端。
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_smartformat_timeadjust_colorsettings.gif" width="400px">
 
 **本次版本关闭的 Issue：**
 

@@ -6,10 +6,13 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 
 ## Latest Change (V1.0.9)
 
-1. **Critical Bug Fix**: Fixed the undo history pollution issue — timer real-time updates no longer pollute the editor's undo/redo stack. Thanks to [mosmash](https://github.com/mosmash) for reporting this issue!
-   - *What is undo pollution?* Previously, every time the timer updated (once per second), it was recorded as an editor change. This meant pressing `Ctrl+Z` would undo the timer update instead of your actual text edits, making the undo function essentially unusable while a timer was running.
-2. **Timer Style Optimization**: Redesigned the timer rendering with a cleaner appearance; removed redundant spaces around timer spans for a more compact display. Added a new option to hide the hours digit for shorter durations (e.g. display `05:30` instead of `00:05:30`).
-3. **New Feature: Time Adjustment**: Added an iPhone-style scroll wheel time picker UI for adjusting timer durations. Accessible via right-click menu or command palette, fully compatible with mobile devices.
+1. **Critical Bug Fix**: Fixed undo history pollution issue — timer updates no longer affect undo/redo(Thanks to [mosmash](https://github.com/mosmash) for providing the solution and submitting a Pull Request!)
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_undostack_fix.gif" width="400px">
+
+
+2. **Timer Style Optimization**: Redesigned timer appearance with cleaner display and option to hide hours digit.
+3. **New Feature: Time Adjustment**: Added iPhone-style scroll wheel time picker UI for adjusting durations.
+<img src="https://github.com/wth461694678/text-block-timer/blob/main/demo/V1.0.9_smartformat_timeadjust_colorsettings.gif" width="400px">
 
 **Closed Issues in this release:**
 
@@ -100,7 +103,7 @@ In the default settings, path control is disabled. When you only want to use the
 ## Version Log:
 
 - V1.0.9
-  1. **==Critical Bug Fix==**: Fixed the undo history pollution issue — timer real-time updates no longer pollute the editor's undo/redo stack. (Thanks to [mosmash](https://github.com/mosmash) for reporting!)
+  1. **==Critical Bug Fix==**: Fixed the undo history pollution issue — timer real-time updates no longer pollute the editor's undo/redo stack. (Thanks to [mosmash](https://github.com/mosmash) for providing the solution and submitting a Pull Request!)
   2. **Timer Style Optimization**: Redesigned the timer rendering style; added option to hide hours digit for shorter durations.
   3. **==New Feature==**: Added Time Adjustment function with an iPhone-style scroll wheel time picker UI, accessible via right-click menu and command palette, fully compatible with mobile.
   4. Closed issues: [#12](https://github.com/wth461694678/text-block-timer/issues/12), [#11](https://github.com/wth461694678/text-block-timer/issues/11), [#7](https://github.com/wth461694678/text-block-timer/issues/7)
