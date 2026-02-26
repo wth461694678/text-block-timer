@@ -327,3 +327,328 @@
         transform: translateY(0);
     }
 }
+
+
+/* ===== Timer Sidebar ===== */
+
+.timer-sidebar-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+    padding: 0;
+}
+
+.timer-sidebar-toolbar {
+    padding: 8px 10px 4px;
+    border-bottom: 1px solid var(--background-modifier-border);
+    flex-shrink: 0;
+}
+
+.timer-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 6px;
+}
+
+.timer-toolbar-controls {
+    flex-wrap: wrap;
+}
+
+.timer-segmented-control {
+    display: flex;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.timer-seg-btn {
+    flex: 1;
+    padding: 4px 6px;
+    font-size: 12px;
+    border: none;
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background 0.15s, color 0.15s;
+}
+
+.timer-seg-btn:not(:last-child) {
+    border-right: 1px solid var(--background-modifier-border);
+}
+
+.timer-seg-btn.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+}
+
+.timer-seg-btn:hover:not(.is-active) {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+.timer-filter-select,
+.timer-sort-select {
+    flex: 1;
+    font-size: 12px;
+    padding: 3px 4px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: var(--background-primary);
+    color: var(--text-normal);
+    cursor: pointer;
+}
+
+.timer-sidebar-summary {
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--text-muted);
+    border-bottom: 1px solid var(--background-modifier-border);
+    flex-shrink: 0;
+}
+
+.timer-summary-row {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.timer-summary-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    border-radius: 10px;
+    background: var(--background-secondary);
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.timer-summary-item.timer-summary-running {
+    color: var(--color-green, #10b981);
+}
+
+.timer-summary-item.timer-summary-paused {
+    color: var(--text-muted);
+}
+
+.timer-summary-label {
+    font-size: 12px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    opacity: 0.75;
+}
+
+.timer-summary-icon {
+    display: block;
+    flex-shrink: 0;
+    opacity: 0.85;
+}
+
+.timer-summary-value {
+    font-size: 12px;
+    line-height: 1;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.timer-sidebar-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 8px;
+}
+
+
+/* Timer Card */
+
+.timer-card {
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 6px;
+    padding: 8px 10px;
+    margin-bottom: 6px;
+    transition: background 0.15s;
+}
+
+.timer-card:hover {
+    background: var(--background-modifier-hover);
+}
+
+.timer-card-running {
+    border-left: 3px solid var(--timer-running-color);
+}
+
+.timer-card-paused {
+    border-left: 3px solid var(--timer-paused-color);
+}
+
+.timer-card-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+}
+
+.timer-card-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.timer-dot-running {
+    background: var(--timer-running-color);
+    box-shadow: 0 0 0 0 var(--timer-running-color);
+    animation: timer-dot-pulse 1.5s infinite;
+}
+
+.timer-dot-paused {
+    background: var(--timer-paused-color);
+}
+
+@keyframes timer-dot-pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+    }
+    70% {
+        box-shadow: 0 0 0 5px rgba(16, 185, 129, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+    }
+}
+
+.timer-card-duration {
+    font-family: monospace;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text-normal);
+}
+
+.timer-card-project {
+    font-size: 11px;
+    padding: 1px 6px;
+    border-radius: 10px;
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    margin-left: auto;
+}
+
+.timer-card-text {
+    font-size: 12px;
+    color: var(--text-normal);
+    margin-bottom: 3px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.timer-card-file-source {
+    font-size: 11px;
+    color: var(--text-muted);
+    margin-bottom: 4px;
+}
+
+.timer-card-file-source:hover {
+    color: var(--text-accent);
+    text-decoration: underline;
+}
+
+.timer-card-actions {
+    display: flex;
+    gap: 4px;
+    justify-content: flex-end;
+}
+
+.timer-card-btn {
+    padding: 2px 8px;
+    font-size: 13px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+    transition: background 0.15s, color 0.15s;
+}
+
+.timer-card-btn:hover {
+    background: var(--background-modifier-hover);
+    color: var(--text-normal);
+}
+
+
+/* Empty state */
+
+.timer-empty-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80px;
+    color: var(--text-muted);
+    font-size: 13px;
+}
+
+
+/* Scan progress */
+
+.timer-scan-progress {
+    padding: 16px;
+    text-align: center;
+}
+
+.timer-scan-progress-text {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+}
+
+.timer-scan-progress-bar {
+    height: 4px;
+    background: var(--background-modifier-border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 10px;
+}
+
+.timer-scan-progress-bar-fill {
+    height: 100%;
+    background: var(--interactive-accent);
+    width: 0%;
+    transition: width 0.3s ease;
+}
+
+.timer-scan-cancel-btn {
+    font-size: 12px;
+    padding: 3px 12px;
+    border-radius: 4px;
+    border: 1px solid var(--background-modifier-border);
+    background: transparent;
+    cursor: pointer;
+    color: var(--text-muted);
+}
+
+
+/* Compact mode (width < 200px) */
+
+.timer-sidebar-compact .timer-card-file-source {
+    display: none;
+}
+
+.timer-sidebar-compact .timer-seg-btn {
+    font-size: 10px;
+    padding: 3px 2px;
+}
+
+
+/* File groups container */
+
+.timer-file-groups-container {
+    margin-top: 8px;
+}
+
+.timer-file-group-item {
+    margin-bottom: 8px;
+}

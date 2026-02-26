@@ -5,7 +5,17 @@
   "runningCheckboxState": "/",
   "pausedCheckboxState": "-xX",
   "checkboxToTimerPathRestriction": "disable",
-  "pathRestrictionPaths": [],
+  "pathRestrictionPaths": [
+    "小数分的成长之路/"
+  ],
+  "checkboxPathGroups": [
+    {
+      "id": "5023a2a4-674d-4d4b-8dc4-c000be7d6b90",
+      "name": "PathGroup1",
+      "whitelist": [],
+      "blacklist": []
+    }
+  ],
   "runningIcon": "⏳",
   "pausedIcon": "💐",
   "timeDisplayFormat": "smart",
@@ -13,5 +23,30 @@
   "runningTextColor": "#10b981",
   "runningBgColor": "rgba(16, 185, 129, 0.15)",
   "pausedTextColor": "#ffffff",
-  "pausedBgColor": "rgba(255, 255, 255, 0.12)"
+  "pausedBgColor": "rgba(255, 255, 255, 0.12)",
+  "showStatusBar": true,
+  "statusBarMode": "max",
+  "sidebarDefaultScope": "open-tabs",
+  "sidebarDefaultFilter": "all",
+  "sidebarDefaultSort": "status",
+  "autoRefreshSidebar": true,
+  "sidebarTabPosition": 4,
+  "timerFileGroups": [
+    {
+      "id": "167fd83d-6f9f-42fc-9130-af5be87288d1",
+      "name": "日记",
+      "whitelist": [
+        ".*\\/日记\\/"
+      ],
+      "blacklist": []
+    },
+    {
+      "id": "d508b250-e6cf-4fd6-baa8-71f778748c87",
+      "name": "非日记",
+      "whitelist": [],
+      "blacklist": [
+        "/日记/"
+      ]
+    }
+  ]
 }

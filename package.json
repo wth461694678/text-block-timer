@@ -1,0 +1,24 @@
+{
+    "name": "text-block-timer",
+    "version": "1.0.9",
+    "description": "Add a timer to text block to enable count-up timing",
+    "main": "main.js",
+    "scripts": {
+        "dev": "node esbuild.config.mjs",
+        "build": "node esbuild.config.mjs production"
+    },
+    "keywords": [],
+    "author": "frankthwang",
+    "license": "MIT",
+    "devDependencies": {
+        "@codemirror/commands": "^6.0.0",
+        "@codemirror/language": "^6.0.0",
+        "@codemirror/state": "^6.0.0",
+        "@codemirror/view": "^6.0.0",
+        "@types/node": "^22.0.0",
+        "builtin-modules": "^4.0.0",
+        "esbuild": "^0.24.0",
+        "obsidian": "latest",
+        "typescript": "^5.7.0"
+    }
+}
