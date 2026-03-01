@@ -105,6 +105,7 @@ export class TimerScanner {
     // Strip Markdown syntax and return plain text summary (max 50 chars)
     static extractLineText(rawLine: string): string {
         let text = rawLine
+            .replace(/<span\s+class="timer-[rp]"[^>]*>[^<]*<\/span>/g, '')  // remove timer HTML spans first
             .replace(/<[^>]+>[\s\S]*?<\/[^>]+>/g, '')  // remove HTML tags with content
             .replace(/<[^>]+>/g, '')                     // remove remaining HTML tags
             .replace(/^#{1,6}\s+/, '')                   // headings

@@ -1,0 +1,227 @@
+<metalib tagsetversion="1" name="nzm_sr_tables" version="1">
+  <!-- **************************************************************************************************************** -->
+  <!-- ** SR 表结构定义（策划配置表 & SR 侧宽表/汇总表）                                                                    -->
+  <!-- ** 说明：SR 表与 TDW 同名表结构一致，但分区字段和调用方式不同                                                           -->
+  <!-- **   - SR 表分区字段通常为 dtstatdate / dteventtime / dteventdate / p_date（格式 YYYY-MM-DD）                        -->
+  <!-- **   - SR 表参数化变量: ${:sys_starttime} / ${:sys_endtime}                                                         -->
+  <!-- **   - SR 表命名空间: codez_dev_sr.codez_dev.* 或 codez_log.*                                                       -->
+  <!-- **   - TDW 表分区字段: tdbank_imp_date（格式 YYYYMMDDHH），参数: ${BEGIN_DATE} / ${END_DATE}                          -->
+  <!-- **   - TDW 表命名空间: ieg_tdbank::codez_dsl_{StructName}_fht0                                                      -->
+  <!-- ** 来源：从用户提供的 SQL 中提取字段信息，字段可能不完整，仅包含 SQL 中出现的已知字段                                       -->
+  <!-- **************************************************************************************************************** -->
+
+  <!-- ================================================================ -->
+  <!-- SR 侧宽表 / 汇总表                                                -->
+  <!-- ================================================================ -->
+
+  <!--///////玩家活跃标签宽表（日增量）///////-->
+  <struct name="dwd_sr_codez_player_activetag_di" version="1" desc="玩家活跃标签宽表（日增量），分区字段 dtstatdate，命名空间 codez_dev_sr.codez_dev。注意：该表仅在玩家注册当天上报，记录玩家在其他游戏的活跃状态，查询时 dtstatdate 需与玩家注册日期对齐">
+    <entry name="dtstatdate"        type="string"      size="10"     desc="统计日期，格式 YYYY-MM-DD，分区字段"/>
+    <entry name="vopenid"           type="string"      size="64"     desc="用户OPENID"/>
+    <entry name="itype"             type="int"                       desc="游戏活跃类型：1=近一个月活跃，2=近2~3个月活跃，3=流失3个月以上"/>
+    <entry name="busi_name"         type="string"      size="128"    desc="游戏来源渠道名称，NULL表示盘外来源（用COALESCE处理）"/>
+  </struct>
+
+  <!--///////玩家流失标签宽表（日增量）///////-->
+  <struct name="dwd_sr_codez_player_losstag_di" version="1" desc="玩家流失标签宽表（日增量），分区字段 dtstatdate，命名空间 codez_dev_sr.codez_dev">
+    <entry name="dtstatdate"        type="string"      size="10"     desc="统计日期，格式 YYYY-MM-DD，分区字段"/>
+    <entry name="vopenid"           type="string"      size="64"     desc="用户OPENID"/>
+    <entry name="itype"             type="int"                       desc="玩家IP类型编码"/>
+    <entry name="is_core"           type="string"      size="32"     desc="玩家定义：核心/次核/NULL(其他玩家)"/>
+    <entry name="from_tag"          type="string"      size="32"     desc="IP类型标签：ip/not ip/NULL(其他玩家)，可忽略"/>
+  </struct>
+
+  <!--///////玩家流失标签维度表（日全量）///////-->
+  <struct name="dim_sr_codez_player_losstag_df" version="1" desc="玩家流失标签维度表（日全量），分区字段 dtstatdate，命名空间 codez_dev_sr.codez_dev">
+    <entry name="dtstatdate"        type="string"      size="10"     desc="统计日期，格式 YYYY-MM-DD，分区字段"/>
+    <entry name="suin"              type="string"      size="64"     desc="用户标识（用于去重统计用户数）"/>
+    <entry name="is_core"           type="string"      size="32"     desc="玩家定义：核心/次核/NULL(其他玩家)"/>
+    <entry name="from_tag"          type="string"      size="32"     desc="IP类型标签：ip/not ip/NULL(其他玩家)，可忽略"/>
+  </struct>
+
+  <!--///////活跃汇总表（日增量）///////-->
+  <struct name="ads_sr_codez_actv_di" version="1" desc="活跃汇总表（日增量），分区字段 dteventtime，命名空间 codez_dev_sr.codez_dev">
+    <entry name="dteventtime"       type="string"      size="10"     desc="事件日期，格式 YYYY-MM-DD，分区字段"/>
+    <entry name="vopenid"           type="string"      size="64"     desc="用户OPENID"/>
+    <entry name="platid"            type="int"                       desc="平台ID，255=全平台汇总，0=iOS，1=Android，2=PC，12=鸿蒙"/>
+    <entry name="onln_time"         type="int"                       desc="在线时长（单位待确认，可能为秒或分钟）"/>
+  </struct>
+
+  <!--///////付费汇总表（日增量）///////-->
+  <struct name="ads_sr_codez_pay_di" version="1" desc="付费汇总表（日增量），分区字段 dteventtime，命名空间 codez_dev_sr.codez_dev">
+    <entry name="dteventtime"       type="string"      size="10"     desc="事件日期，格式 YYYY-MM-DD，分区字段"/>
+    <entry name="vopenid"           type="string"      size="64"     desc="用户OPENID"/>
+    <entry name="platid"            type="int"                       desc="平台ID，255=全平台汇总，0=iOS，1=Android，2=PC，12=鸿蒙"/>
+    <entry name="pay_amt"           type="float"                     desc="付费金额（单位待确认，可能为元）"/>
+  </struct>
+
+  <!-- ================================================================ -->
+  <!-- TDW 中间表（codez_mid_analysis 库）                                -->
+  <!-- 说明：这些表是 TDW 侧的中间表/配置表，命名空间 codez_mid_analysis.*    -->
+  <!--       分区字段: tdbank_imp_date（格式 YYYYMMDDHH）                  -->
+  <!--       使用优先级高于 SR 库同名表                                     -->
+  <!-- ================================================================ -->
+
+  <!--///////通用配置表（TDW中间表版本，优先于SR库）///////-->
+  <struct name="codez_mid_analysis.codez_ret_excelconfiginfo_conf" version="1" desc="通用配置表（TDW中间表版本），命名空间 codez_mid_analysis，使用优先级高于 SR 库 codez_dev_sr.codez_dev.codez_ret_excelconfiginfo_conf。通过 configname 区分不同配置类型。分区字段 tdbank_imp_date">
+    <entry name="tdbank_imp_date"    type="string"      size="12"     desc="TDW分区字段，格式 YYYYMMDDHH"/>
+    <entry name="worldid"            type="string"      size="32"     desc="世界ID"/>
+    <entry name="ip"                 type="string"      size="32"     desc="IP地址"/>
+    <entry name="__tablename"        type="string"      size="64"     desc="内部表名"/>
+    <entry name="gamesvrid"          type="string"      size="32"     desc="游戏服务器ID"/>
+    <entry name="dteventtime"        type="string"      size="32"     desc="事件时间"/>
+    <entry name="env"                type="string"      size="16"     desc="环境标识，live=正式服"/>
+    <entry name="branchpath"         type="string"      size="64"     desc="分支路径"/>
+    <entry name="configname"         type="string"      size="64"     desc="配置类型名称，如 FubenEntranceInfo"/>
+    <entry name="rownumber"          type="bigint"                    desc="行号"/>
+    <entry name="param1"             type="string"      size="64"     desc="参数1，FubenEntranceInfo 时为 dungeon_id（需 CAST AS BIGINT）"/>
+    <entry name="param2"             type="string"      size="64"     desc="参数2，FubenEntranceInfo 时为 map_id"/>
+    <entry name="param3"             type="string"      size="64"     desc="参数3"/>
+    <entry name="param4"             type="string"      size="64"     desc="参数4，FubenEntranceInfo 时为玩法模式名称(mode_name)"/>
+    <entry name="param5"             type="string"      size="64"     desc="参数5"/>
+    <entry name="param6"             type="string"      size="64"     desc="参数6"/>
+    <entry name="param7"             type="string"      size="64"     desc="参数7，FubenEntranceInfo 时为 map_name"/>
+    <entry name="param8"             type="string"      size="64"     desc="参数8，FubenEntranceInfo 时为难度"/>
+    <entry name="param9"             type="string"      size="64"     desc="参数9"/>
+    <entry name="param10"            type="string"      size="64"     desc="参数10"/>
+    <entry name="param11"            type="string"      size="64"     desc="参数11"/>
+    <entry name="param12"            type="string"      size="64"     desc="参数12"/>
+    <entry name="param13"            type="string"      size="64"     desc="参数13"/>
+    <entry name="param14"            type="string"      size="64"     desc="参数14"/>
+    <entry name="param15"            type="string"      size="64"     desc="参数15"/>
+    <entry name="param16"            type="string"      size="64"     desc="参数16"/>
+    <entry name="param17"            type="string"      size="64"     desc="参数17"/>
+    <entry name="param18"            type="string"      size="64"     desc="参数18"/>
+    <entry name="param19"            type="string"      size="64"     desc="参数19"/>
+    <entry name="param20"            type="string"      size="64"     desc="参数20"/>
+    <entry name="param21"            type="string"      size="64"     desc="参数21"/>
+    <entry name="param22"            type="string"      size="64"     desc="参数22"/>
+    <entry name="param23"            type="string"      size="64"     desc="参数23"/>
+    <entry name="param24"            type="string"      size="64"     desc="参数24"/>
+    <entry name="param25"            type="string"      size="64"     desc="参数25"/>
+    <entry name="param26"            type="string"      size="64"     desc="参数26"/>
+    <entry name="param27"            type="string"      size="64"     desc="参数27"/>
+    <entry name="param28"            type="string"      size="64"     desc="参数28"/>
+    <entry name="param29"            type="string"      size="64"     desc="参数29"/>
+    <entry name="param30"            type="string"      size="64"     desc="参数30"/>
+  </struct>
+
+  <!--///////武器配置中间表///////-->
+  <struct name="codez_mid_analysis.codez_ret_weapon_conf" version="1" desc="武器配置中间表，命名空间 codez_mid_analysis，提供武器ID到武器名称、类型、品质等映射">
+    <entry name="weaponid"           type="string"      size="32"     desc="武器ID"/>
+    <entry name="weaponname"         type="string"      size="64"     desc="武器名称"/>
+    <entry name="originalweaponid"   type="string"      size="32"     desc="原始武器ID"/>
+    <entry name="originalweaponname" type="string"      size="64"     desc="原始武器名称"/>
+    <entry name="weaponprotoid"      type="string"      size="32"     desc="武器原型ID"/>
+    <entry name="weapontypeid"       type="string"      size="32"     desc="武器类型ID"/>
+    <entry name="weapontypename"     type="string"      size="64"     desc="武器类型名称"/>
+    <entry name="weaponquality"      type="string"      size="16"     desc="武器品质"/>
+    <entry name="weaponskillinfo"    type="string"      size="256"    desc="武器技能信息"/>
+    <entry name="weaponskilltag"     type="string"      size="128"    desc="武器技能标签"/>
+    <entry name="weaponammotype"     type="string"      size="32"     desc="武器弹药类型"/>
+  </struct>
+
+  <!--///////赛季天赋配置中间表///////-->
+  <struct name="codez_mid_analysis.tmp_codez_seasontalent_conf" version="1" desc="赛季天赋配置中间表，命名空间 codez_mid_analysis，提供赛季天赋ID到天赋名称映射">
+    <entry name="uniqueid"           type="bigint"                    desc="唯一ID"/>
+    <entry name="seasonid"           type="bigint"                    desc="赛季ID"/>
+    <entry name="talentid"           type="bigint"                    desc="天赋ID"/>
+    <entry name="aftertalentid"      type="string"      size="64"     desc="后续天赋ID"/>
+    <entry name="talentname"         type="string"      size="64"     desc="天赋名称"/>
+    <entry name="isimportant"        type="bigint"                    desc="是否重要天赋"/>
+  </struct>
+
+  <!--///////副本配置中间表///////-->
+  <struct name="codez_mid_analysis.codez_ret_dungeon_conf" version="1" desc="副本配置中间表，命名空间 codez_mid_analysis，提供副本ID到副本名称、地图、玩法模式等映射。可替代 codez_ret_excelconfiginfo_conf 中 configname='FubenEntranceInfo' 的查询，字段更直观">
+    <entry name="dungeonid"          type="bigint"                    desc="副本ID（对应 idungeonid）"/>
+    <entry name="mapid"              type="string"      size="32"     desc="地图ID"/>
+    <entry name="gamemode"           type="string"      size="64"     desc="游戏模式"/>
+    <entry name="modetype"           type="string"      size="64"     desc="玩法模式类型（通常的'玩法'口径字段），如 僵尸猎场、塔防、机甲战 等"/>
+    <entry name="dungeontype"        type="string"      size="64"     desc="副本类型"/>
+    <entry name="dungeonname"        type="string"      size="64"     desc="副本名称"/>
+    <entry name="mapname"            type="string"      size="64"     desc="地图名称"/>
+    <entry name="difficultyname"     type="string"      size="64"     desc="难度名称"/>
+  </struct>
+
+  <!-- ================================================================ -->
+  <!-- SR 侧配置表                                                       -->
+  <!-- ================================================================ -->
+
+  <!--///////副本入口信息配置表（SR库版本，优先级低于TDW中间表）///////-->
+  <struct name="codez_ret_excelconfiginfo_conf" version="1" desc="通用配置表，命名空间 codez_dev_sr.codez_dev 或 codez_dev，通过 configname 区分不同配置类型。注意：优先使用 codez_mid_analysis 库的同名表或专用中间表">
+    <entry name="configname"        type="string"      size="64"     desc="配置类型名称，如 FubenEntranceInfo"/>
+    <entry name="param1"            type="string"      size="64"     desc="参数1，FubenEntranceInfo 时为 dungeon_id（需 CAST AS BIGINT）"/>
+    <entry name="param2"            type="string"      size="64"     desc="参数2，FubenEntranceInfo 时为 map_id"/>
+    <entry name="param3"            type="string"      size="64"     desc="参数3"/>
+    <entry name="param4"            type="string"      size="64"     desc="参数4，FubenEntranceInfo 时为玩法模式名称(mode_name)，已知值：塔防/机甲战/僵尸猎场/猎场竞速/时空追猎/躲猫猫"/>
+    <entry name="param5"            type="string"      size="64"     desc="参数5，FubenEntranceInfo 且 param4=僵尸猎场 时为猎场副本细分分类"/>
+    <entry name="param6"            type="string"      size="64"     desc="参数6"/>
+    <entry name="param7"            type="string"      size="64"     desc="参数7，FubenEntranceInfo 时为 map_name"/>
+    <entry name="param8"            type="string"      size="64"     desc="参数8，FubenEntranceInfo 时为难度"/>
+  </struct>
+
+  <!-- ================================================================ -->
+  <!-- SR 侧社交/道具/组队宽表                                            -->
+  <!-- ================================================================ -->
+
+  <!--///////社交宽表（日增量）///////-->
+  <struct name="dwd_sr_codez_social_wide_di" version="1" desc="社交宽表（日增量），分区字段 p_date，命名空间 codez_dev_sr.codez_dev">
+    <entry name="p_date"            type="string"      size="10"     desc="分区日期，格式 YYYY-MM-DD"/>
+    <!-- 具体字段待补充，需用户提供 SQL 或表结构 -->
+  </struct>
+
+  <!--///////道具宽表（日增量）///////-->
+  <struct name="dwd_sr_codez_item_di" version="1" desc="道具宽表（日增量），分区字段 p_date，命名空间 codez_dev_sr.codez_dev">
+    <entry name="p_date"            type="string"      size="10"     desc="分区日期，格式 YYYY-MM-DD"/>
+    <!-- 具体字段待补充，需用户提供 SQL 或表结构 -->
+  </struct>
+
+  <!--///////组队类型宽表（日增量）///////-->
+  <struct name="dwd_sr_codez_matchteamtype_di" version="1" desc="组队类型宽表（日增量），分区字段 p_date，命名空间 codez_dev_sr.codez_dev">
+    <entry name="p_date"            type="string"      size="10"     desc="分区日期，格式 YYYY-MM-DD"/>
+    <!-- 具体字段待补充，需用户提供 SQL 或表结构 -->
+  </struct>
+
+  <!-- ================================================================ -->
+  <!-- SR 侧同结构 TDW 表（调用方式不同）                                   -->
+  <!-- 说明：以下表与 TDW 表结构完全一致（参见 nzm_tlog_desc_tdw XML），      -->
+  <!--       但命名空间为 codez_log.*，分区字段为 dteventdate               -->
+  <!-- ================================================================ -->
+
+  <!--///////SR侧玩家注册表///////-->
+  <!-- 表结构与 TDW PlayerRegister 完全一致，此处仅列出 SR 侧的差异说明 -->
+  <!-- 调用方式: codez_log.codez_dsl_playerregister_fht0 -->
+  <!-- 分区字段: dteventdate（格式 YYYY-MM-DD HH:MM:SS），非 tdbank_imp_date -->
+  <!-- 环境过滤: env = 'live' -->
+
+  <!--///////SR侧玩家登录表///////-->
+  <!-- 表结构与 TDW PlayerLogin 完全一致 -->
+  <!-- 调用方式: codez_log.codez_dsl_playerlogin_fht0 -->
+  <!-- 分区字段: dteventdate（格式 YYYY-MM-DD HH:MM:SS），可同时用 dteventtime 二次过滤 -->
+  <!-- 环境过滤: env = 'live'，登录成功: loginresult = 0 -->
+  <!-- 关键字段: vopenid, ilevel(玩家等级), loginresult, dteventdate, dteventtime -->
+
+  <!--///////SR侧玩家登出表///////-->
+  <!-- 表结构与 TDW PlayerLogout 完全一致 -->
+  <!-- 调用方式: codez_log.codez_dsl_playerlogout_fht0 -->
+  <!-- 分区字段: dteventdate（格式 YYYY-MM-DD HH:MM:SS），可同时用 dteventtime 二次过滤 -->
+  <!-- 环境过滤: env = 'live' -->
+  <!-- 关键字段: vopenid, ilevel(玩家等级), dteventdate, dteventtime -->
+
+  <!--///////SR侧对局明细表///////-->
+  <!-- 表结构与 TDW GameDetail 完全一致 -->
+  <!-- 调用方式: codez_log.codez_dsl_gamedetail_fht0 -->
+  <!-- 分区字段: dteventdate -->
+  <!-- 环境过滤: env = 'live' -->
+  <!-- 关键字段: vopenid, idungeonid(副本ID), iDuration(对局时长,秒), env -->
+  <!-- 备注: idungeonid = 2004001 为大厅，需排除 -->
+
+  <!--///////SR侧中退明细表///////-->
+  <!-- 表结构与 TDW DropOutDetail 完全一致 -->
+  <!-- 调用方式: codez_log.codez_dsl_dropoutdetail_fht0 -->
+  <!-- 分区字段: dteventdate -->
+  <!-- 环境过滤: env = 'live' -->
+  <!-- 关键字段: vopenid, idungeonid(副本ID), iDuration(对局时长,秒), env -->
+  <!-- 备注: 完整对局明细 = GameDetail UNION ALL DropOutDetail，排除 idungeonid = 2004001 -->
+
+</metalib>

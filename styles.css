@@ -341,7 +341,6 @@
 
 .timer-sidebar-toolbar {
     padding: 8px 10px 4px;
-    border-bottom: 1px solid var(--background-modifier-border);
     flex-shrink: 0;
 }
 
@@ -405,7 +404,6 @@
     padding: 6px 10px;
     font-size: 12px;
     color: var(--text-muted);
-    border-bottom: 1px solid var(--background-modifier-border);
     flex-shrink: 0;
 }
 
@@ -651,4 +649,107 @@
 
 .timer-file-group-item {
     margin-bottom: 8px;
+}
+
+
+/* ===== Statistics Chart Styles ===== */
+
+.timer-statistics-container {
+    padding: 8px 10px;
+    background: var(--background-secondary);
+}
+
+.timer-statistics-toggle {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 8px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+    margin-bottom: 8px;
+}
+
+.timer-statistics-toggle:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+
+.timer-statistics-toggle.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+.timer-chart-container {
+    height: 300px;
+    width: 100%;
+    border-radius: 6px;
+    background: var(--background-primary);
+    border: 1px solid var(--background-modifier-border);
+}
+
+.timer-chart-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--text-muted);
+    font-size: 12px;
+    text-align: center;
+    padding: 20px;
+}
+
+.timer-toolbar-stats-row {
+    justify-content: center;
+    margin-top: 4px;
+}
+
+.timer-stats-toggle {
+    padding: 4px 12px;
+    border: 1px solid var(--background-modifier-border);
+    border-radius: 4px;
+    background: var(--background-primary);
+    color: var(--text-normal);
+    font-size: 12px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.timer-stats-toggle:hover {
+    background: var(--background-modifier-hover);
+    border-color: var(--interactive-accent);
+}
+
+.timer-stats-toggle.is-active {
+    background: var(--interactive-accent);
+    color: var(--text-on-accent);
+    border-color: var(--interactive-accent);
+}
+
+
+/* ── Statistics Chart ─────────────────────────────────────────────────── */
+
+.timer-statistics-container {
+    padding: 4px 8px 8px;
+}
+
+.timer-chart-container {
+    width: 100%;
+    min-height: 320px;
+}
+
+.timer-chart-empty,
+.timer-chart-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    min-height: 80px;
+    color: var(--text-muted);
+    font-size: 12px;
 }

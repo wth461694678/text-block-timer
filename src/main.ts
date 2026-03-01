@@ -12,6 +12,7 @@ import { TimerSettings, TimerSettingTab } from './ui/TimerSettingTab';
 import { TimePickerModal } from './ui/TimePickerModal';
 import { timerFoldingField, timerWidgetKeymap, timerCursorEscape } from './ui/TimerWidget';
 import { TimerDatabase } from './core/TimerDatabase';
+import { TimerIndexedDB, IDBTimerEntry } from './core/TimerIndexedDB';
 import { TimerScanner } from './core/TimerScanner';
 import { TimerSidebarView, TIMER_SIDEBAR_VIEW_TYPE } from './ui/TimerSidebarView';
 import { TimeFormatter } from './io/TimeFormatter';
@@ -23,6 +24,7 @@ export default class TimerPlugin extends Plugin {
     settings!: TimerSettings;
     fileFirstOpen = true;
     database!: TimerDatabase;
+    idb!: TimerIndexedDB;
     scanner!: TimerScanner;
     statusBarItem!: HTMLElement;
 
@@ -48,6 +50,7 @@ export default class TimerPlugin extends Plugin {
         sidebarDefaultScope: 'open-tabs',
         sidebarDefaultFilter: 'all',
         sidebarDefaultSort: 'status',
+        sidebarDefaultGroup: '',
         autoRefreshSidebar: true,
         sidebarTabPosition: 4,
         timerFileGroups: []
@@ -76,8 +79,26 @@ export default class TimerPlugin extends Plugin {
         await this.database.load();
         perf.startupMark('database.load() done');
 
-        await this.database.recoverCrashedSessions();
-        perf.startupMark('recoverCrashedSessions done');
+        // Initialize IndexedDB cache layer
+        this.idb = new TimerIndexedDB();
+        await this.idb.open();
+        perf.startupMark('idb.open() done');
+
+        // Crash recovery: fix running timers left from previous session
+        const recoveries = this.database.recoverCrashedTimers();
+        if (recoveries.length > 0) {
+            // Persist recovery to JSON
+            await this.database.flush();
+            // Update IndexedDB daily_dur for recovered timers
+            for (const r of recoveries) {
+                await this.idb.addDailyDur(r.timerId, r.date, r.deltaSec);
+            }
+        }
+        perf.startupMark('recoverCrashedTimers done');
+
+        // Seed IndexedDB from JSON (timers + daily_dur)
+        await this.seedIndexedDB();
+        perf.startupMark('seedIndexedDB done');
 
         this.scanner = new TimerScanner(this.app, this.manager);
         perf.startupMark('TimerScanner created');
@@ -314,18 +335,29 @@ export default class TimerPlugin extends Plugin {
     }
 
     onunload() {
-        // T18: Sync-report plugin_unload sessions before clearing
+        // Sync running timers to JSON before unload
         const runningTimers = this.manager.getAllTimers();
+        const unloadNow = Math.floor(Date.now() / 1000);
         runningTimers.forEach((data, timerId) => {
             if (data.class === 'timer-r') {
-                this.database.appendSessionSync(timerId, 'plugin_unload');
+                // Compute session segments and add to daily_dur in memory
+                const segments = this.database.computeRunningSessionSegments(timerId);
+                for (const seg of segments) {
+                    this.database.addDailyDurInMemory(timerId, seg.date, seg.deltaSec);
+                }
                 this.database.updateEntrySync(timerId, {
                     state: 'paused',
-                    last_ts: Math.floor(Date.now() / 1000)
+                    total_dur_sec: data.dur,
+                    last_ts: unloadNow,
+                    updated_at: unloadNow
                 });
+                this.database.clearSessionStart(timerId);
             }
         });
         this.database.flushSync();
+        // Note: IndexedDB is async, cannot reliably write in onunload.
+        // JSON flush above is the authoritative persistent record.
+        this.idb.close();
 
         this.manager.clearAll();
         this.fileManager.clearLocations();
@@ -490,26 +522,29 @@ export default class TimerPlugin extends Plugin {
 
         // Read current line text (before writing timer span) as context
         const rawLineText = view.editor?.getLine?.(lineNum) ?? '';
+        const cleanLineText = TimerScanner.extractLineText(rawLineText);
 
         this.manager.startTimer(timerId, initialData, this.onTick.bind(this));
         this.fileManager.locations.set(timerId, { view, file, lineNum });
         this.fileManager.writeTimer(timerId, initialData, view, file, lineNum, null);
 
-        // T16: Sync to database
+        // Sync to database (JSON + IndexedDB)
         const now = Math.floor(Date.now() / 1000);
-        this.database.updateEntry(timerId, {
+        const newEntry: IDBTimerEntry = {
             timer_id: timerId,
             file_path: file?.path ?? '',
             line_num: lineNum,
-            line_text: rawLineText,
+            line_text: cleanLineText,
             project: null,
             state: 'running',
             total_dur_sec: 0,
             last_ts: now,
             created_at: now,
             updated_at: now
-        });
+        };
+        this.database.updateEntry(timerId, newEntry);
         this.database.recordSessionStart(timerId);
+        this.idb.putTimer(newEntry); // async, fire-and-forget
 
         // Immediately sync UI
         this.updateStatusBar();
@@ -517,7 +552,7 @@ export default class TimerPlugin extends Plugin {
             timerId,
             filePath: file?.path ?? '',
             lineNum,
-            lineText: rawLineText,
+            lineText: cleanLineText,
             state: 'timer-r',
             dur: 0,
             ts: now,
@@ -535,21 +570,27 @@ export default class TimerPlugin extends Plugin {
 
         // Read current line text as context
         const rawLineText = view.editor?.getLine?.(lineNum) ?? '';
+        const cleanLineText = TimerScanner.extractLineText(rawLineText);
 
         this.manager.startTimer(timerId, newData, this.onTick.bind(this));
         this.fileManager.locations.set(timerId, { view, file, lineNum });
         this.fileManager.writeTimer(timerId, newData, view, view.file, lineNum, parsedData);
 
-        // T16: Sync to database
+        // Sync to database (JSON + IndexedDB)
         const now = Math.floor(Date.now() / 1000);
-        this.database.updateEntry(timerId, {
-            state: 'running',
+        const patch = {
+            state: 'running' as const,
+            total_dur_sec: newData.dur,
             last_ts: now,
             file_path: file?.path ?? '',
             line_num: lineNum,
-            line_text: rawLineText
-        });
+            line_text: cleanLineText,
+            project: newData.project ?? null,
+            updated_at: now
+        };
+        this.database.updateEntry(timerId, patch);
         this.database.recordSessionStart(timerId);
+        this.idb.patchTimer(timerId, patch); // async, fire-and-forget
 
         // Immediately sync UI
         this.updateStatusBar();
@@ -565,57 +606,65 @@ export default class TimerPlugin extends Plugin {
 
         // Read current line text as context
         const rawLineText = view.editor?.getLine?.(lineNum) ?? '';
+        const cleanLineText = TimerScanner.extractLineText(rawLineText);
 
         this.manager.stopTimer(timerId);
         this.fileManager.writeTimer(timerId, newData, view, view.file, lineNum, parsedData);
 
-        // T16: Sync to database
+        // Compute session segments (may span multiple days)
+        const segments = this.database.computeRunningSessionSegments(timerId);
+
+        // Sync to database (JSON + IndexedDB)
         const now = Math.floor(Date.now() / 1000);
-        const startTs = (this.database as any).sessionStartTs?.get(timerId) ?? now;
-        const duration = Math.max(0, now - startTs);
-        this.database.updateEntry(timerId, {
-            state: 'paused',
+        const patch = {
+            state: 'paused' as const,
             total_dur_sec: newData.dur,
             last_ts: now,
             file_path: view.file?.path ?? '',
             line_num: lineNum,
-            line_text: rawLineText
-        });
-        this.database.appendSession({
-            session_id: crypto.randomUUID(),
-            timer_id: timerId,
-            stat_date: new Date().toLocaleDateString('sv'),
-            duration_sec: duration,
-            end_reason: 'paused',
-            reported_at: now
-        });
+            line_text: cleanLineText,
+            project: newData.project ?? null,
+            updated_at: now
+        };
+        this.database.updateEntry(timerId, patch);
+        for (const seg of segments) {
+            this.database.addDailyDurInMemory(timerId, seg.date, seg.deltaSec);
+        }
         this.database.clearSessionStart(timerId);
+        // JSON flush is already scheduled by updateEntry
+
+        // Update IndexedDB timer state only (daily_dur is already accumulated by tick)
+        this.idb.patchTimer(timerId, patch);
 
         // Immediately sync UI
         this.updateStatusBar();
-        this.notifySidebarStateChanged(timerId, 'timer-p');
+        this.notifySidebarStateChanged(timerId, 'timer-p', newData.dur);
     }
 
     handleDelete(view: any, lineNum: number, parsedData: TimerData | null) {
         if (!parsedData || !parsedData.timerId) return;
         const timerId = parsedData.timerId;
 
-        // T16: Sync to database
+        // Sync to database (JSON + IndexedDB)
         const now = Math.floor(Date.now() / 1000);
         const wasRunning = parsedData.class === 'timer-r';
-        this.database.updateEntry(timerId, { state: 'deleted', last_ts: now });
+        const currentDataForDelete = this.manager.getTimerData(timerId) || parsedData;
+        const patch = {
+            state: 'deleted' as const,
+            total_dur_sec: currentDataForDelete.dur,
+            last_ts: now,
+            updated_at: now
+        };
+        this.database.updateEntry(timerId, patch);
         if (wasRunning) {
-            const startTs = (this.database as any).sessionStartTs?.get(timerId) ?? now;
-            this.database.appendSession({
-                session_id: crypto.randomUUID(),
-                timer_id: timerId,
-                stat_date: new Date().toLocaleDateString('sv'),
-                duration_sec: Math.max(0, now - startTs),
-                end_reason: 'deleted',
-                reported_at: now
-            });
+            const segments = this.database.computeRunningSessionSegments(timerId);
+            for (const seg of segments) {
+                this.database.addDailyDurInMemory(timerId, seg.date, seg.deltaSec);
+            }
             this.database.clearSessionStart(timerId);
+            // Note: IDB daily_dur is already accumulated by tick — no need to write again
         }
+        this.idb.patchTimer(timerId, patch);
 
         this.manager.stopTimer(timerId);
         this.fileManager.locations.delete(timerId);
@@ -667,16 +716,41 @@ export default class TimerPlugin extends Plugin {
         if (parsedData.class !== 'timer-p') return;
 
         const timerId = parsedData.timerId;
+        const oldDur = parsedData.dur;
         const newData = TimerDataUpdater.calculate('setDuration', { ...parsedData, newDur });
+
+        // 1. Update the file's front-end display with the new duration
         this.fileManager.writeTimer(timerId, newData, view, view.file, lineNum, parsedData);
 
-        // Sync database
+        // 2. Sync total_dur_sec to JSON database
+        const now = Math.floor(Date.now() / 1000);
         this.database.updateEntry(timerId, {
             total_dur_sec: newData.dur,
-            last_ts: Math.floor(Date.now() / 1000)
+            last_ts: now
         });
 
-        // Immediately sync UI
+        // 3. Adjust daily_dur based on increase vs decrease
+        const today = new Date().toLocaleDateString('sv');
+        const delta = newData.dur - oldDur;
+
+        if (delta < 0) {
+            // Duration decreased: deduct from most recent dates first (LIFO)
+            this.database.adjustDailyDurForSetDuration(timerId, newData.dur);
+            this.idb.adjustDailyDurForSetDuration(timerId, newData.dur);
+        } else if (delta > 0) {
+            // Duration increased: add the delta to today's date
+            this.database.addDailyDurInMemory(timerId, today, delta);
+            this.idb.addDailyDur(timerId, today, delta);
+        }
+        // delta === 0: no change needed
+
+        // Persist JSON (updateEntry already scheduled flush, but ensure daily_dur is included)
+        this.database.flush();
+
+        // Update IndexedDB timer entry
+        this.idb.patchTimer(timerId, { total_dur_sec: newData.dur, last_ts: now });
+
+        // 4. Immediately sync UI (sidebar list + charts + status bar)
         this.updateStatusBar();
         this.notifySidebarDurChanged(timerId, newData.dur);
     }
@@ -698,6 +772,9 @@ export default class TimerPlugin extends Plugin {
             const oldData = this.manager.getTimerData(timerId);
             if (!oldData || oldData.class !== 'timer-r') return;
 
+            // Save old timestamp BEFORE calculate to compute accurate tickDelta
+            const oldTs = oldData.ts ?? Math.floor(Date.now() / 1000);
+
             const newData = TimerDataUpdater.calculate('update', oldData);
             this.manager.updateTimerData(timerId, newData);
 
@@ -708,20 +785,32 @@ export default class TimerPlugin extends Plugin {
                 this.manager.stopTimer(timerId);
             }
 
-            // Update last_ts in memory only (no flush) — used for crash recovery calculation.
-            // line_text / line_num / file_path are updated on state changes (pause/continue/start),
-            // so we don't need to persist them every second.
+            // Update last_ts and total_dur_sec in memory only (no JSON flush)
+            const tickNow = Math.floor(Date.now() / 1000);
+            const tickDelta = tickNow - oldTs; // seconds elapsed this tick (accurate ~1s)
             this.database.updateEntryInMemory(timerId, {
-                last_ts: Math.floor(Date.now() / 1000)
+                last_ts: tickNow,
+                total_dur_sec: newData.dur
             });
+
+            // Write to IndexedDB (hot cache) — atomic tick update
+            const tickToday = new Date().toLocaleDateString('sv');
+            this.idb.tickUpdate(timerId, newData.dur, tickNow, tickToday, tickDelta);
 
             // Patch sidebar card text in-place (no full re-render)
             if (result.lineText !== null) {
                 this.notifySidebarLineTextChanged(timerId, result.lineText);
             }
 
-            // T16: Day boundary check (must await)
-            await this.database.checkDayBoundary(timerId);
+            // Day boundary check — when timer crosses midnight, split duration
+            // into per-day segments and write to JSON memory only.
+            // Note: IDB daily_dur is already correctly split by date via tickUpdate,
+            // which writes to `today` at each tick (the date naturally changes at midnight).
+            // JSON memory has no tick writes, so it needs boundary segments.
+            const boundarySegments = this.database.checkDayBoundary(timerId);
+            for (const seg of boundarySegments) {
+                this.database.addDailyDurInMemory(timerId, seg.date, seg.deltaSec);
+            }
 
             // T12: Refresh sidebar duration display
             if (this.settings.autoRefreshSidebar !== false) {
@@ -804,6 +893,46 @@ export default class TimerPlugin extends Plugin {
         return null;
     }
 
+    /**
+     * Seed IndexedDB from JSON data on plugin load.
+     * Populates the "timers" and "daily_dur" stores from the persisted JSON.
+     */
+    private async seedIndexedDB(): Promise<void> {
+        // Clear stale IDB data before seeding (handles deleted timers, etc.)
+        await this.idb.clearAll();
+
+        // Seed timers store
+        const entries = this.database.queryTimers();
+        const idbEntries: IDBTimerEntry[] = entries.map(e => ({
+            timer_id: e.timer_id,
+            file_path: e.file_path,
+            line_num: e.line_num,
+            line_text: e.line_text,
+            project: e.project,
+            state: e.state,
+            total_dur_sec: e.total_dur_sec,
+            last_ts: e.last_ts,
+            created_at: e.created_at,
+            updated_at: e.updated_at
+        }));
+        await this.idb.bulkPutTimers(idbEntries);
+
+        // Seed daily_dur store
+        const dailyDur = this.database.getDailyDur();
+        const dailyRecords: import('./core/TimerIndexedDB').DailyDurRecord[] = [];
+        for (const [date, timerMap] of Object.entries(dailyDur)) {
+            for (const [timerId, dur] of Object.entries(timerMap)) {
+                dailyRecords.push({
+                    key: `${timerId}|${date}`,
+                    timer_id: timerId,
+                    stat_date: date,
+                    duration_sec: dur
+                });
+            }
+        }
+        await this.idb.bulkPutDailyDur(dailyRecords);
+    }
+
     async openSidebar(): Promise<void> {
         const existing = this.app.workspace.getLeavesOfType(TIMER_SIDEBAR_VIEW_TYPE);
         if (existing.length > 0) {
@@ -838,10 +967,10 @@ export default class TimerPlugin extends Plugin {
     }
 
     /** Notify sidebar that a timer's running/paused state changed. */
-    notifySidebarStateChanged(timerId: string, newState: 'timer-r' | 'timer-p'): void {
+    notifySidebarStateChanged(timerId: string, newState: 'timer-r' | 'timer-p', newDur?: number): void {
         const view = this.getSidebarView();
         if (!view) return;
-        view.onTimerStateChanged(timerId, newState);
+        view.onTimerStateChanged(timerId, newState, newDur);
     }
 
     /** Notify sidebar that a new timer was added. */

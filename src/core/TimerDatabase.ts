@@ -6,7 +6,13 @@ export interface TimerDbFile {
     version: number;
     lastFullScan: string;
     timers: Record<string, TimerEntry>;
-    sessions: TimerSession[];
+    /**
+     * Per-timer per-date duration totals.
+     * Outer key: stat_date (YYYY-MM-DD)
+     * Inner key: timer_id
+     * Value: total seconds for that timer on that date
+     */
+    daily_dur: Record<string, Record<string, number>>;
 }
 
 export interface TimerEntry {
@@ -20,15 +26,6 @@ export interface TimerEntry {
     last_ts: number;
     created_at: number;
     updated_at: number;
-}
-
-export interface TimerSession {
-    session_id: string;
-    timer_id: string;
-    stat_date: string;
-    duration_sec: number;
-    end_reason: 'paused' | 'deleted' | 'day_boundary' | 'plugin_unload' | 'crash_recovery';
-    reported_at: number;
 }
 
 export interface TimerFilter {
@@ -68,10 +65,40 @@ export class TimerDatabase {
         try {
             const raw = await this.plugin.app.vault.adapter.read(this.DB_PATH);
             this.data = JSON.parse(raw) as TimerDbFile;
+            // Migrate: ensure daily_dur exists
+            if (!this.data.daily_dur || typeof this.data.daily_dur !== 'object') {
+                this.data.daily_dur = {};
+            }
+            // Migrate: ensure timers object exists
+            if (!this.data.timers || typeof this.data.timers !== 'object') {
+                this.data.timers = {};
+            }
+            // Migrate: remove legacy sessions array if present
+            if ((this.data as any).sessions) {
+                // Convert legacy sessions to daily_dur
+                this.migrateLegacySessions((this.data as any).sessions);
+                delete (this.data as any).sessions;
+            }
         } catch {
             this.data = this.createEmptyDb();
         }
         this.buildIndexes();
+    }
+
+    /**
+     * Migrate legacy sessions[] to daily_dur structure.
+     * Called once during load if old data format is detected.
+     */
+    private migrateLegacySessions(sessions: any[]): void {
+        if (!this.data || !Array.isArray(sessions)) return;
+        for (const session of sessions) {
+            const timerId: string = session.timer_id;
+            const date: string = session.stat_date;
+            const dur: number = session.duration_sec ?? 0;
+            if (!timerId || !date || dur <= 0) continue;
+            if (!this.data.daily_dur[date]) this.data.daily_dur[date] = {};
+            this.data.daily_dur[date][timerId] = (this.data.daily_dur[date][timerId] ?? 0) + dur;
+        }
     }
 
     exists(): boolean {
@@ -84,10 +111,10 @@ export class TimerDatabase {
 
     private createEmptyDb(): TimerDbFile {
         return {
-            version: 1,
+            version: 2,
             lastFullScan: '',
             timers: {},
-            sessions: []
+            daily_dur: {}
         };
     }
 
@@ -122,7 +149,7 @@ export class TimerDatabase {
         fs.writeFileSync(fullPath, JSON.stringify(this.data));
     }
 
-    // ===== CRUD =====
+    // ===== Timer CRUD =====
 
     async updateEntry(timerId: string, patch: Partial<TimerEntry>): Promise<void> {
         if (!this.data) return;
@@ -166,8 +193,8 @@ export class TimerDatabase {
 
     /**
      * Update entry in memory only — no flush scheduled.
-     * Use this for high-frequency tick updates (e.g. last_ts, line_text)
-     * to avoid serializing the entire JSON file every second.
+     * Used for high-frequency tick updates (last_ts, total_dur_sec).
+     * IndexedDB is the authoritative real-time source; JSON is flushed on state changes.
      */
     updateEntryInMemory(timerId: string, patch: Partial<TimerEntry>): void {
         if (!this.data) return;
@@ -175,30 +202,6 @@ export class TimerDatabase {
         if (existing) {
             Object.assign(existing, patch);
         }
-    }
-
-    async appendSession(session: TimerSession): Promise<void> {
-        if (!this.data) return;
-        this.data.sessions.push(session);
-        this.scheduleFlush();
-    }
-
-    appendSessionSync(timerId: string, endReason: TimerSession['end_reason']): void {
-        if (!this.data) return;
-        const now = Math.floor(Date.now() / 1000);
-        const startTs = this.sessionStartTs.get(timerId) ?? now;
-        const duration = Math.max(0, now - startTs);
-        const today = new Date().toLocaleDateString('sv');
-        const session: TimerSession = {
-            session_id: crypto.randomUUID(),
-            timer_id: timerId,
-            stat_date: today,
-            duration_sec: duration,
-            end_reason: endReason,
-            reported_at: now
-        };
-        this.data.sessions.push(session);
-        // No flush — caller must call flushSync()
     }
 
     async removeFile(filePath: string): Promise<void> {
@@ -226,13 +229,13 @@ export class TimerDatabase {
         this.scheduleFlush();
     }
 
-    async rebuild(entries: TimerEntry[], sessions: TimerSession[]): Promise<void> {
+    async rebuild(entries: TimerEntry[]): Promise<void> {
         const now = new Date().toISOString();
         const newDb: TimerDbFile = {
-            version: 1,
+            version: 2,
             lastFullScan: now,
             timers: {},
-            sessions
+            daily_dur: this.data?.daily_dur ?? {}
         };
         for (const entry of entries) {
             newDb.timers[entry.timer_id] = entry;
@@ -240,6 +243,64 @@ export class TimerDatabase {
         this.data = newDb;
         this.buildIndexes();
         await this.flush();
+    }
+
+    // ===== Daily Duration =====
+
+    /**
+     * Add delta seconds to a timer's daily duration in memory.
+     * Called on state changes (pause/stop). Flush is scheduled automatically.
+     */
+    addDailyDurInMemory(timerId: string, date: string, deltaSec: number): void {
+        if (!this.data || deltaSec <= 0) return;
+        if (!this.data.daily_dur[date]) this.data.daily_dur[date] = {};
+        this.data.daily_dur[date][timerId] = (this.data.daily_dur[date][timerId] ?? 0) + deltaSec;
+    }
+
+    /**
+     * Set (overwrite) a timer's daily duration for a specific date in memory.
+     * Used when user manually adjusts total duration.
+     */
+    setDailyDurInMemory(timerId: string, date: string, durationSec: number): void {
+        if (!this.data) return;
+        if (!this.data.daily_dur[date]) this.data.daily_dur[date] = {};
+        this.data.daily_dur[date][timerId] = Math.max(0, durationSec);
+    }
+
+    /**
+     * Adjust daily durations for a timer when user manually sets total duration.
+     * Deducts from most recent dates first (LIFO).
+     */
+    adjustDailyDurForSetDuration(timerId: string, newTotalDur: number): void {
+        if (!this.data) return;
+        // Collect all date entries for this timer, sorted ascending (oldest first)
+        const dateEntries: { date: string; dur: number }[] = [];
+        for (const [date, timerMap] of Object.entries(this.data.daily_dur)) {
+            if (timerMap[timerId] !== undefined && timerMap[timerId] > 0) {
+                dateEntries.push({ date, dur: timerMap[timerId] });
+            }
+        }
+        // Sort ascending: oldest date first, so we preserve older dates first
+        // and deduct from the most recent dates first
+        dateEntries.sort((a, b) => a.date.localeCompare(b.date));
+
+        let remaining = newTotalDur;
+        for (const entry of dateEntries) {
+            if (remaining <= 0) {
+                this.data.daily_dur[entry.date][timerId] = 0;
+            } else if (remaining >= entry.dur) {
+                remaining -= entry.dur;
+                // unchanged — this date is fully preserved
+            } else {
+                this.data.daily_dur[entry.date][timerId] = remaining;
+                remaining = 0;
+            }
+        }
+    }
+
+    /** Get all daily_dur data (for seeding IndexedDB on load). */
+    getDailyDur(): Record<string, Record<string, number>> {
+        return this.data?.daily_dur ?? {};
     }
 
     // ===== Query =====
@@ -285,21 +346,6 @@ export class TimerDatabase {
         return entries;
     }
 
-    querySessionsByDate(date: string): TimerSession[] {
-        if (!this.data) return [];
-        return this.data.sessions.filter(s => s.stat_date === date);
-    }
-
-    querySessionsByTimerId(timerId: string, days?: number): TimerSession[] {
-        if (!this.data) return [];
-        let sessions = this.data.sessions.filter(s => s.timer_id === timerId);
-        if (days !== undefined) {
-            const cutoff = Math.floor(Date.now() / 1000) - days * 86400;
-            sessions = sessions.filter(s => s.reported_at >= cutoff);
-        }
-        return sessions;
-    }
-
     // ===== Session Start Tracking =====
 
     recordSessionStart(timerId: string): void {
@@ -313,70 +359,111 @@ export class TimerDatabase {
         this.sessionStartTs.delete(timerId);
     }
 
+    getSessionStartTs(timerId: string): number | undefined {
+        return this.sessionStartTs.get(timerId);
+    }
+
+    getSessionStartDate(timerId: string): string | undefined {
+        return this.sessionStartDate.get(timerId);
+    }
+
     // ===== Day Boundary Detection =====
 
-    async checkDayBoundary(timerId: string): Promise<void> {
+    /**
+     * Check if the timer has crossed midnight since its session started.
+     * Returns an array of { date, deltaSec } for each day that was crossed,
+     * so the caller can update both JSON and IndexedDB.
+     */
+    checkDayBoundary(timerId: string): { date: string; deltaSec: number }[] {
         const startDate = this.sessionStartDate.get(timerId);
-        if (!startDate) return;
+        if (!startDate) return [];
 
         const today = new Date().toLocaleDateString('sv');
-        if (startDate === today) return;
+        if (startDate === today) return [];
 
-        // Day has changed — record a day_boundary session
         const now = Math.floor(Date.now() / 1000);
-        const startTs = this.sessionStartTs.get(timerId) ?? now;
+        let currentDate = startDate;
+        let currentTs = this.sessionStartTs.get(timerId) ?? now;
+        const segments: { date: string; deltaSec: number }[] = [];
 
-        // Calculate duration up to midnight of the start date
-        const startDateObj = new Date(startDate);
-        startDateObj.setDate(startDateObj.getDate() + 1);
-        startDateObj.setHours(0, 0, 0, 0);
-        const midnightTs = Math.floor(startDateObj.getTime() / 1000);
-        const duration = Math.max(0, midnightTs - startTs);
-
-        const session: TimerSession = {
-            session_id: crypto.randomUUID(),
-            timer_id: timerId,
-            stat_date: startDate,
-            duration_sec: duration,
-            end_reason: 'day_boundary',
-            reported_at: now
-        };
-        await this.appendSession(session);
+        while (currentDate !== today) {
+            const dateObj = new Date(currentDate);
+            dateObj.setDate(dateObj.getDate() + 1);
+            dateObj.setHours(0, 0, 0, 0);
+            const midnightTs = Math.floor(dateObj.getTime() / 1000);
+            const duration = Math.max(0, midnightTs - currentTs);
+            segments.push({ date: currentDate, deltaSec: duration });
+            currentDate = dateObj.toLocaleDateString('sv');
+            currentTs = midnightTs;
+        }
 
         // Update session start to today
         this.sessionStartDate.set(timerId, today);
-        this.sessionStartTs.set(timerId, midnightTs);
+        this.sessionStartTs.set(timerId, currentTs);
+
+        return segments;
     }
 
     // ===== Crash Recovery =====
 
-    async recoverCrashedSessions(): Promise<void> {
-        if (!this.data) return;
+    /**
+     * Recover timers that were running when the plugin crashed.
+     * Returns list of { timerId, date, deltaSec } for caller to update IndexedDB.
+     */
+    recoverCrashedTimers(): { timerId: string; date: string; deltaSec: number }[] {
+        if (!this.data) return [];
         const now = Math.floor(Date.now() / 1000);
-        const today = new Date().toLocaleDateString('sv');
-        let hasRecovery = false;
+        const recoveries: { timerId: string; date: string; deltaSec: number }[] = [];
 
         for (const [timerId, entry] of Object.entries(this.data.timers)) {
             if (entry.state === 'running') {
-                // This timer was running when the plugin crashed
-                const duration = Math.max(0, now - entry.last_ts);
-                const session: TimerSession = {
-                    session_id: crypto.randomUUID(),
-                    timer_id: timerId,
-                    stat_date: today,
-                    duration_sec: duration,
-                    end_reason: 'crash_recovery',
-                    reported_at: now
-                };
-                this.data.sessions.push(session);
+                const endTs = entry.last_ts;
+                const statDate = new Date(endTs * 1000).toLocaleDateString('sv');
+                const crashDuration = Math.max(0, now - endTs);
+
+                // Add to daily_dur in memory
+                this.addDailyDurInMemory(timerId, statDate, crashDuration);
+
+                // Mark as paused
                 entry.state = 'paused';
                 entry.updated_at = now;
-                hasRecovery = true;
+
+                recoveries.push({ timerId, date: statDate, deltaSec: crashDuration });
             }
         }
 
-        if (hasRecovery) {
-            await this.flush();
+        return recoveries;
+    }
+
+    /**
+     * Compute the duration of the current running session for a timer
+     * (from session start to now), split by date if it crossed midnight.
+     * Returns segments for caller to update daily_dur.
+     */
+    computeRunningSessionSegments(timerId: string): { date: string; deltaSec: number }[] {
+        const startTs = this.sessionStartTs.get(timerId);
+        const startDate = this.sessionStartDate.get(timerId);
+        if (!startTs || !startDate) return [];
+
+        const now = Math.floor(Date.now() / 1000);
+        const today = new Date().toLocaleDateString('sv');
+        const segments: { date: string; deltaSec: number }[] = [];
+
+        let currentDate = startDate;
+        let currentTs = startTs;
+
+        while (currentDate !== today) {
+            const dateObj = new Date(currentDate);
+            dateObj.setDate(dateObj.getDate() + 1);
+            dateObj.setHours(0, 0, 0, 0);
+            const midnightTs = Math.floor(dateObj.getTime() / 1000);
+            segments.push({ date: currentDate, deltaSec: Math.max(0, midnightTs - currentTs) });
+            currentDate = dateObj.toLocaleDateString('sv');
+            currentTs = midnightTs;
         }
+
+        // Today's segment
+        segments.push({ date: today, deltaSec: Math.max(0, now - currentTs) });
+        return segments;
     }
 }
