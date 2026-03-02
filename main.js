@@ -3274,6 +3274,14 @@ var TimerDatabase = class {
     return (_b2 = (_a2 = this.data) == null ? void 0 : _a2.daily_dur) != null ? _b2 : {};
   }
   // ===== Query =====
+  /**
+   * Get a single timer entry by ID.
+   * Returns null if timer not found or database not loaded.
+   */
+  getEntry(timerId) {
+    var _a2, _b2;
+    return (_b2 = (_a2 = this.data) == null ? void 0 : _a2.timers[timerId]) != null ? _b2 : null;
+  }
   queryTimers(filter2 = {}, sort4 = "status") {
     if (!this.data) return [];
     let entries = Object.values(this.data.timers);
@@ -79892,6 +79900,26 @@ var TimerSidebarView = class extends import_obsidian3.ItemView {
 
 // src/main.ts
 init_TimeFormatter();
+function extractTimerIdsFromText(text) {
+  const result = /* @__PURE__ */ new Map();
+  const spanRegex = /<span\s+[^>]*class="timer-[rp]"[^>]*>/g;
+  let match;
+  while ((match = spanRegex.exec(text)) !== null) {
+    const spanTag = match[0];
+    const idMatch = spanTag.match(/\bid="([^"]+)"/);
+    const durMatch = spanTag.match(/data-dur="([^"]+)"/);
+    const tsMatch = spanTag.match(/data-ts="([^"]+)"/);
+    const projMatch = spanTag.match(/data-project="([^"]+)"/);
+    if (idMatch) {
+      result.set(idMatch[1], {
+        dur: durMatch ? parseInt(durMatch[1], 10) : 0,
+        ts: tsMatch ? parseInt(tsMatch[1], 10) : 0,
+        project: projMatch ? projMatch[1] : null
+      });
+    }
+  }
+  return result;
+}
 var TimerPlugin = class extends import_obsidian4.Plugin {
   constructor() {
     super(...arguments);
@@ -80067,6 +80095,7 @@ var TimerPlugin = class extends import_obsidian4.Plugin {
       timerWidgetKeymap,
       timerCursorEscape
     ]);
+    this.registerPassiveDeletionDetector();
     this.registerEditorExtension(
       import_view3.EditorView.updateListener.of((update) => {
         if (update.docChanged && this.settings.enableCheckboxToTimer && this.checkPathRestriction()) {
@@ -80792,6 +80821,173 @@ var TimerPlugin = class extends import_obsidian4.Plugin {
         this.handlePause(view, lineNum, parsed);
       }
     }
+  }
+  // ===== Passive Deletion / Restoration Detection =====
+  /**
+   * Register a CM6 EditorView.updateListener extension that detects
+   * timer spans disappearing or reappearing in document changes.
+   */
+  registerPassiveDeletionDetector() {
+    this.registerEditorExtension(
+      import_view3.EditorView.updateListener.of((update) => {
+        var _a2, _b2;
+        if (!update.docChanged) return;
+        const oldDoc = update.startState.doc;
+        const newDoc = update.state.doc;
+        const activeView = this.app.workspace.getActiveViewOfType(import_obsidian4.FileView);
+        const filePath = (_b2 = (_a2 = activeView == null ? void 0 : activeView.file) == null ? void 0 : _a2.path) != null ? _b2 : "";
+        update.changes.iterChanges((oldFrom, oldTo, newFrom, newTo) => {
+          const oldStartLine = oldDoc.lineAt(oldFrom).number;
+          const oldEndLine = oldDoc.lineAt(Math.min(oldTo, oldDoc.length)).number;
+          const newStartLine = newDoc.lineAt(newFrom).number;
+          const newEndLine = newDoc.lineAt(Math.min(newTo, newDoc.length)).number;
+          let oldText = "";
+          for (let ln = oldStartLine; ln <= oldEndLine; ln++) {
+            oldText += oldDoc.line(ln).text + "\n";
+          }
+          let newText = "";
+          for (let ln = newStartLine; ln <= newEndLine; ln++) {
+            newText += newDoc.line(ln).text + "\n";
+          }
+          const oldTimers = extractTimerIdsFromText(oldText);
+          const newTimers = extractTimerIdsFromText(newText);
+          for (const [timerId] of oldTimers) {
+            if (!newTimers.has(timerId)) {
+              this.handlePassiveDelete(timerId);
+            }
+          }
+          for (const [timerId, attrs] of newTimers) {
+            if (!oldTimers.has(timerId)) {
+              const entry = this.database.getEntry(timerId);
+              if (entry && entry.state === "deleted") {
+                let timerLineNum = newStartLine - 1;
+                for (let ln = newStartLine; ln <= newEndLine; ln++) {
+                  const lineText = newDoc.line(ln).text;
+                  if (lineText.includes(`id="${timerId}"`)) {
+                    timerLineNum = ln - 1;
+                    break;
+                  }
+                }
+                this.handlePassiveRestore(
+                  timerId,
+                  attrs.dur,
+                  attrs.ts,
+                  filePath,
+                  timerLineNum,
+                  attrs.project
+                );
+              }
+            }
+          }
+        });
+      })
+    );
+  }
+  /**
+   * Handle passive deletion detected by CM6 updateListener.
+   * Called when a timer span disappears from the document due to user editing.
+   * Idempotent: skips if timer is already in 'deleted' state.
+   *
+   * @param timerId - The ID of the timer that disappeared
+   */
+  handlePassiveDelete(timerId) {
+    const entry = this.database.getEntry(timerId);
+    if (!entry || entry.state === "deleted") return;
+    if (DEBUG) console.log(`[PassiveDelete] timerId=${timerId}, wasRunning=${entry.state === "running"}`);
+    const now = Math.floor(Date.now() / 1e3);
+    const wasRunning = entry.state === "running";
+    if (wasRunning) {
+      const currentData = this.manager.getTimerData(timerId);
+      const totalDur = currentData ? currentData.dur : entry.total_dur_sec;
+      const segments = this.database.computeRunningSessionSegments(timerId);
+      for (const seg of segments) {
+        this.database.addDailyDurInMemory(timerId, seg.date, seg.deltaSec);
+        this.idb.addDailyDur(timerId, seg.date, seg.deltaSec);
+      }
+      this.database.clearSessionStart(timerId);
+      this.manager.stopTimer(timerId);
+      const patch2 = {
+        state: "deleted",
+        total_dur_sec: totalDur,
+        last_ts: now,
+        updated_at: now
+      };
+      this.database.updateEntry(timerId, patch2);
+      this.idb.patchTimer(timerId, patch2);
+    } else {
+      const patch2 = {
+        state: "deleted",
+        last_ts: now,
+        updated_at: now
+      };
+      this.database.updateEntry(timerId, patch2);
+      this.idb.patchTimer(timerId, patch2);
+    }
+    this.fileManager.locations.delete(timerId);
+    this.updateStatusBar();
+    this.notifySidebarTimerRemoved(timerId);
+  }
+  /**
+   * Handle passive restoration detected by CM6 updateListener.
+   * Called when a previously deleted timer span reappears in the document (e.g., Ctrl+Z).
+   * Idempotent: skips if timer is not in 'deleted' state.
+   * Restores timer to 'paused' state (never auto-resumes to 'running').
+   *
+   * @param timerId - The timer ID from the span
+   * @param spanDur - Duration from span's data-dur attribute (authoritative)
+   * @param spanTs - Timestamp from span's data-ts attribute
+   * @param filePath - File path where the span reappeared
+   * @param lineNum - Line number (0-based) where the span reappeared
+   * @param project - Project from span's data-project attribute
+   */
+  handlePassiveRestore(timerId, spanDur, spanTs, filePath, lineNum, project) {
+    const entry = this.database.getEntry(timerId);
+    if (!entry || entry.state !== "deleted") return;
+    if (DEBUG) console.log(`[PassiveRestore] timerId=${timerId}, spanDur=${spanDur}, filePath=${filePath}`);
+    const now = Math.floor(Date.now() / 1e3);
+    const patch2 = {
+      state: "paused",
+      total_dur_sec: spanDur,
+      last_ts: spanTs,
+      file_path: filePath,
+      line_num: lineNum,
+      project,
+      updated_at: now
+    };
+    this.database.updateEntry(timerId, patch2);
+    this.idb.patchTimer(timerId, patch2);
+    this.updateStatusBar();
+    this.notifySidebarTimerAdded({
+      timerId,
+      filePath,
+      lineNum,
+      lineText: entry.line_text,
+      // Reuse existing line_text from DB
+      state: "timer-p",
+      dur: spanDur,
+      ts: spanTs,
+      project
+    });
+    setTimeout(() => {
+      const activeView = this.app.workspace.getActiveViewOfType(import_obsidian4.FileView);
+      if (!activeView || !activeView.editor) return;
+      const editor = activeView.editor;
+      const file = activeView.file;
+      if (!file) return;
+      const lineText = editor.getLine(lineNum);
+      if (!lineText || !lineText.includes(`id="${timerId}"`)) return;
+      if (!lineText.includes('class="timer-r"')) return;
+      const parsed = TimerParser.parse(lineText, "auto", timerId);
+      if (!parsed || parsed.timerId !== timerId) return;
+      const pausedData = {
+        class: "timer-p",
+        timerId,
+        dur: spanDur,
+        ts: spanTs,
+        project: project != null ? project : void 0
+      };
+      this.fileManager.writeTimer(timerId, pausedData, activeView, file, lineNum, parsed);
+    }, 0);
   }
 };
 /*! Bundled license information:

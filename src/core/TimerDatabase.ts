@@ -305,6 +305,14 @@ export class TimerDatabase {
 
     // ===== Query =====
 
+    /**
+     * Get a single timer entry by ID.
+     * Returns null if timer not found or database not loaded.
+     */
+    getEntry(timerId: string): TimerEntry | null {
+        return this.data?.timers[timerId] ?? null;
+    }
+
     queryTimers(filter: TimerFilter = {}, sort: TimerSort = 'status'): TimerEntry[] {
         if (!this.data) return [];
         let entries = Object.values(this.data.timers);

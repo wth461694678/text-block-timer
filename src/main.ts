@@ -17,9 +17,38 @@ import { TimerScanner } from './core/TimerScanner';
 import { TimerSidebarView, TIMER_SIDEBAR_VIEW_TYPE } from './ui/TimerSidebarView';
 import { TimeFormatter } from './io/TimeFormatter';
 
-// —�?Main plugin class —�?//
-export default class TimerPlugin extends Plugin {
-    manager!: TimerManager;
+// ===== Module-level helper: lightweight regex-based timer ID extraction =====
+
+/**
+ * Extract timer IDs and their attributes from a text fragment using regex.
+ * Lightweight — no DOM parsing, suitable for updateListener hot path.
+ *
+ * @param text - Raw text to scan for timer spans
+ * @returns Map of timerId → { dur, ts, project }
+ */
+function extractTimerIdsFromText(text: string): Map<string, { dur: number; ts: number; project: string | null }> {
+    const result = new Map<string, { dur: number; ts: number; project: string | null }>();
+    const spanRegex = /<span\s+[^>]*class="timer-[rp]"[^>]*>/g;
+    let match;
+    while ((match = spanRegex.exec(text)) !== null) {
+        const spanTag = match[0];
+        const idMatch = spanTag.match(/\bid="([^"]+)"/);
+        const durMatch = spanTag.match(/data-dur="([^"]+)"/);
+        const tsMatch = spanTag.match(/data-ts="([^"]+)"/);
+        const projMatch = spanTag.match(/data-project="([^"]+)"/);
+        if (idMatch) {
+            result.set(idMatch[1], {
+                dur: durMatch ? parseInt(durMatch[1], 10) : 0,
+                ts: tsMatch ? parseInt(tsMatch[1], 10) : 0,
+                project: projMatch ? projMatch[1] : null
+            });
+        }
+    }
+    return result;
+}
+
+// — Main plugin class — //
+export default class TimerPlugin extends Plugin {    manager!: TimerManager;
     fileManager!: TimerFileManager;
     settings!: TimerSettings;
     fileFirstOpen = true;
@@ -244,6 +273,9 @@ export default class TimerPlugin extends Plugin {
             timerWidgetKeymap,
             timerCursorEscape
         ]);
+
+        // Passive deletion/restoration detector
+        this.registerPassiveDeletionDetector();
 
         // Checkbox to timer listener
         this.registerEditorExtension(
@@ -1126,5 +1158,228 @@ export default class TimerPlugin extends Plugin {
                 this.handlePause(view, lineNum, parsed);
             }
         }
+    }
+
+    // ===== Passive Deletion / Restoration Detection =====
+
+    /**
+     * Register a CM6 EditorView.updateListener extension that detects
+     * timer spans disappearing or reappearing in document changes.
+     */
+    private registerPassiveDeletionDetector(): void {
+        this.registerEditorExtension(
+            EditorView.updateListener.of((update) => {
+                if (!update.docChanged) return;
+
+                const oldDoc = update.startState.doc;
+                const newDoc = update.state.doc;
+
+                // Get active file path for restore context
+                const activeView = this.app.workspace.getActiveViewOfType(FileView);
+                const filePath = (activeView as any)?.file?.path ?? '';
+
+                update.changes.iterChanges((oldFrom, oldTo, newFrom, newTo) => {
+                    // Extract affected line ranges in old and new documents
+                    const oldStartLine = oldDoc.lineAt(oldFrom).number;
+                    const oldEndLine = oldDoc.lineAt(Math.min(oldTo, oldDoc.length)).number;
+                    const newStartLine = newDoc.lineAt(newFrom).number;
+                    const newEndLine = newDoc.lineAt(Math.min(newTo, newDoc.length)).number;
+
+                    // Collect old text (lines that were replaced/deleted)
+                    let oldText = '';
+                    for (let ln = oldStartLine; ln <= oldEndLine; ln++) {
+                        oldText += oldDoc.line(ln).text + '\n';
+                    }
+
+                    // Collect new text (lines that replaced/were inserted)
+                    let newText = '';
+                    for (let ln = newStartLine; ln <= newEndLine; ln++) {
+                        newText += newDoc.line(ln).text + '\n';
+                    }
+
+                    const oldTimers = extractTimerIdsFromText(oldText);
+                    const newTimers = extractTimerIdsFromText(newText);
+
+                    // Detect disappeared timers → passive delete
+                    for (const [timerId] of oldTimers) {
+                        if (!newTimers.has(timerId)) {
+                            this.handlePassiveDelete(timerId);
+                        }
+                    }
+
+                    // Detect appeared timers → passive restore (if was deleted)
+                    for (const [timerId, attrs] of newTimers) {
+                        if (!oldTimers.has(timerId)) {
+                            const entry = this.database.getEntry(timerId);
+                            if (entry && entry.state === 'deleted') {
+                                // Find which line within newStartLine..newEndLine contains this timer
+                                let timerLineNum = newStartLine - 1; // 0-based
+                                for (let ln = newStartLine; ln <= newEndLine; ln++) {
+                                    const lineText = newDoc.line(ln).text;
+                                    if (lineText.includes(`id="${timerId}"`)) {
+                                        timerLineNum = ln - 1; // CM6 lines are 1-based, our lineNum is 0-based
+                                        break;
+                                    }
+                                }
+                                this.handlePassiveRestore(
+                                    timerId,
+                                    attrs.dur,
+                                    attrs.ts,
+                                    filePath,
+                                    timerLineNum,
+                                    attrs.project
+                                );
+                            }
+                        }
+                    }
+                });
+            })
+        );
+    }
+
+    /**
+     * Handle passive deletion detected by CM6 updateListener.
+     * Called when a timer span disappears from the document due to user editing.
+     * Idempotent: skips if timer is already in 'deleted' state.
+     *
+     * @param timerId - The ID of the timer that disappeared
+     */
+    handlePassiveDelete(timerId: string): void {
+        // Idempotent check: skip if already deleted or not found
+        const entry = this.database.getEntry(timerId);
+        if (!entry || entry.state === 'deleted') return;
+
+        if (DEBUG) console.log(`[PassiveDelete] timerId=${timerId}, wasRunning=${entry.state === 'running'}`);
+
+        const now = Math.floor(Date.now() / 1000);
+        const wasRunning = entry.state === 'running';
+
+        // If running, settle duration first
+        if (wasRunning) {
+            const currentData = this.manager.getTimerData(timerId);
+            const totalDur = currentData ? currentData.dur : entry.total_dur_sec;
+
+            // Compute session segments for daily_dur
+            const segments = this.database.computeRunningSessionSegments(timerId);
+            for (const seg of segments) {
+                this.database.addDailyDurInMemory(timerId, seg.date, seg.deltaSec);
+                this.idb.addDailyDur(timerId, seg.date, seg.deltaSec);
+            }
+            this.database.clearSessionStart(timerId);
+
+            // Stop the in-memory timer
+            this.manager.stopTimer(timerId);
+
+            // Update state
+            const patch = {
+                state: 'deleted' as const,
+                total_dur_sec: totalDur,
+                last_ts: now,
+                updated_at: now
+            };
+            this.database.updateEntry(timerId, patch);
+            this.idb.patchTimer(timerId, patch);
+        } else {
+            // Paused timer: just mark deleted
+            const patch = {
+                state: 'deleted' as const,
+                last_ts: now,
+                updated_at: now
+            };
+            this.database.updateEntry(timerId, patch);
+            this.idb.patchTimer(timerId, patch);
+        }
+
+        // Clean up file manager location
+        this.fileManager.locations.delete(timerId);
+
+        // Sync UI
+        this.updateStatusBar();
+        this.notifySidebarTimerRemoved(timerId);
+    }
+
+    /**
+     * Handle passive restoration detected by CM6 updateListener.
+     * Called when a previously deleted timer span reappears in the document (e.g., Ctrl+Z).
+     * Idempotent: skips if timer is not in 'deleted' state.
+     * Restores timer to 'paused' state (never auto-resumes to 'running').
+     *
+     * @param timerId - The timer ID from the span
+     * @param spanDur - Duration from span's data-dur attribute (authoritative)
+     * @param spanTs - Timestamp from span's data-ts attribute
+     * @param filePath - File path where the span reappeared
+     * @param lineNum - Line number (0-based) where the span reappeared
+     * @param project - Project from span's data-project attribute
+     */
+    handlePassiveRestore(
+        timerId: string,
+        spanDur: number,
+        spanTs: number,
+        filePath: string,
+        lineNum: number,
+        project: string | null
+    ): void {
+        // Idempotent check: only restore if currently deleted
+        const entry = this.database.getEntry(timerId);
+        if (!entry || entry.state !== 'deleted') return;
+
+        if (DEBUG) console.log(`[PassiveRestore] timerId=${timerId}, spanDur=${spanDur}, filePath=${filePath}`);
+
+        const now = Math.floor(Date.now() / 1000);
+
+        // Restore to paused state, using span attributes as authoritative data
+        const patch = {
+            state: 'paused' as const,
+            total_dur_sec: spanDur,
+            last_ts: spanTs,
+            file_path: filePath,
+            line_num: lineNum,
+            project: project,
+            updated_at: now
+        };
+        this.database.updateEntry(timerId, patch);
+        this.idb.patchTimer(timerId, patch);
+
+        // Sync UI
+        this.updateStatusBar();
+        this.notifySidebarTimerAdded({
+            timerId,
+            filePath,
+            lineNum,
+            lineText: entry.line_text, // Reuse existing line_text from DB
+            state: 'timer-p',
+            dur: spanDur,
+            ts: spanTs,
+            project
+        });
+
+        // Async: fix editor span class to match paused state (timer-r → timer-p)
+        // Must be deferred because we're inside a CM6 updateListener callback
+        setTimeout(() => {
+            const activeView = this.app.workspace.getActiveViewOfType(FileView);
+            if (!activeView || !(activeView as any).editor) return;
+            const editor = (activeView as any).editor;
+            const file = (activeView as any).file as TFile;
+            if (!file) return;
+
+            const lineText = editor.getLine(lineNum);
+            if (!lineText || !lineText.includes(`id="${timerId}"`)) return;
+
+            // Only fix if span is still timer-r (class mismatch)
+            if (!lineText.includes('class="timer-r"')) return;
+
+            const parsed = TimerParser.parse(lineText, 'auto', timerId);
+            if (!parsed || parsed.timerId !== timerId) return;
+
+            // Build paused TimerData and rewrite the span
+            const pausedData: TimerData = {
+                class: 'timer-p',
+                timerId,
+                dur: spanDur,
+                ts: spanTs,
+                project: project ?? undefined
+            };
+            this.fileManager.writeTimer(timerId, pausedData, activeView, file, lineNum, parsed);
+        }, 0);
     }
 }

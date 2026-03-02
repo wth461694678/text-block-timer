@@ -1,829 +1,232 @@
 ---
-name: text-block-timer-dev-pipeline
-description: This skill should be used when a user wants to develop new features for the Text Block Timer Obsidian plugin. It drives a full 8-phase development pipeline from a one-line requirement through PRD → UX Review → Data Schema Design → Technical Design → Architecture Review → Test Cases → Coding → Testing. Trigger keywords include 执行开发流水线, Phase, PRD, 技术方案, 测试用例, 开发, text-block-timer.
+# ═══════════════════════════════════════════════
+#  Skill Entry File — AI Agent 标准入口描述
+# ═══════════════════════════════════════════════
+
+# ── 基础元信息 ──
+skill_id: text-block-timer-dev-pipeline
+skill_name: "Text Block Timer 全流程开发 Skill"
+version: "2.0"
+description: |
+  通过一句话需求，自动驱动从 PRD → UI Review → 数据设计 → 技术方案 → 架构 Review → 测试用例 → 编码开发 → 功能测试的全流程开发流水线。
+  适用于 Obsidian 插件 Text Block Timer 项目的功能开发。
+author: frankthwang
+created: 2026-03-01
+updated: 2026-03-01
+tags: [obsidian-plugin, full-stack, dev-pipeline, typescript]
+
+# ── 触发条件（Agent 通过 pattern 匹配决定是否加载此 Skill）──
+triggers:
+  - pattern: "请基于 dev-skill-text-block-timer.md 执行开发流水线：*"
+    description: "完整流水线触发"
+  - pattern: "请执行开发流水线：*"
+    description: "完整流水线触发（简写）"
+  - pattern: "请从 Phase * 开始执行*"
+    description: "从指定阶段开始"
+  - pattern: "请只执行 Phase *"
+    description: "单阶段执行"
+  - pattern: "返工 Phase *"
+    description: "返工指定阶段"
+
+# ── 输入参数 ──
+inputs:
+  required:
+    - name: requirement
+      type: string
+      description: "用户的一句话需求描述"
+  optional:
+    - name: start_phase
+      type: integer
+      range: [1, 8]
+      default: 1
+      description: "起始阶段编号（默认从 Phase 1 开始）"
+    - name: end_phase
+      type: integer
+      range: [1, 8]
+      default: 8
+      description: "结束阶段编号（默认执行到 Phase 8）"
+    - name: skip_phases
+      type: array<integer>
+      default: []
+      description: "需要跳过的阶段编号列表"
+    - name: only_phase
+      type: integer
+      range: [1, 8]
+      default: null
+      description: "仅执行指定的单个阶段"
+    - name: existing_prd
+      type: file_path
+      default: null
+      description: "已有的 PRD 文件路径（跳过 Phase 1 时必填）"
+    - name: test_chain
+      type: string
+      default: null
+      description: "Phase 8 仅运行指定的测试链名称"
+
+# ── 输出声明 ──
+outputs:
+  files:
+    - path: "doc/PRD-{{feature_name}}.md"
+      phase: 1
+      description: "产品需求文档"
+    - path: "doc/tech-design-{{feature_name}}.md"
+      phase: 4
+      description: "技术设计文档"
+    - path: "doc/test-cases-{{feature_name}}.md"
+      phase: 6
+      description: "测试用例文档"
+    - path: "src/**/*.ts"
+      phase: 7
+      description: "功能源码"
+    - path: "tests/e2e-timer-test.mjs"
+      phase: 7
+      description: "E2E 测试脚本"
+  completion_marker: "[🎉 全流程完成]"
+
+# ── 能力声明（8 个阶段摘要）──
+capabilities:
+  - phase: 1
+    name: "PRD 撰写"
+    role: "资深产品经理（10 年经验）"
+    output: "doc/PRD-{{feature_name}}.md"
+    tools: [read_file, edit_file]
+
+  - phase: 2
+    name: "UI/UX Review"
+    role: "资深 UI/UX 设计师（8 年经验，桌面 + 移动端）"
+    output: "修改后的 PRD（标注 [UX-优化]）"
+    tools: [read_file, replace_in_file]
+
+  - phase: 3
+    name: "数据表需求设计"
+    role: "资深数仓工程师 + 数据分析师"
+    output: "数据 Schema 设计（嵌入技术方案或独立输出）"
+    tools: [read_file]
+
+  - phase: 4
+    name: "技术方案撰写"
+    role: "资深前端架构师（8 年 TypeScript 大型项目）"
+    output: "doc/tech-design-{{feature_name}}.md"
+    tools: [read_file, codebase_search, edit_file]
+
+  - phase: 5
+    name: "架构 Review"
+    role: "全球顶级首席架构师（15+ 年）"
+    output: "Review 报告 + 修复后的技术方案"
+    tools: [read_file, codebase_search, replace_in_file]
+    branch_logic: "✅→Phase6 | ⚠️→AutoFix→Phase6 | ❌→回退Phase4"
+
+  - phase: 6
+    name: "测试用例编写"
+    role: "产品经理 + QA 测试负责人"
+    output: "doc/test-cases-{{feature_name}}.md"
+    tools: [read_file, edit_file]
+
+  - phase: 7
+    name: "编码开发"
+    role: "资深全栈开发（TypeScript / Obsidian API / CM6 / ECharts）"
+    output: "源码 + E2E 测试脚本"
+    tools: [read_file, codebase_search, edit_file, replace_in_file, multi_replace, terminal]
+
+  - phase: 8
+    name: "测试验证"
+    role: "自动化测试工程师"
+    output: "测试报告"
+    tools: [terminal, read_file]
+    branch_logic: "全通过→完成 | 失败→修复→重试(≤3轮) | 3轮失败→BLOCKED"
+
+# ── 执行模式 ──
+execution:
+  mode: sequential_phases
+  total_phases: 8
+  allow_skip: true
+  allow_jump: true
+  allow_single: true
+  allow_rework: true
+  auto_advance: true
+
+# ── 前置条件 ──
+prerequisites:
+  - "项目已构建通过（npm run build 无报错）"
+  - "Obsidian 开发环境可用（用于 E2E 测试）"
+
+# ── 项目作用域 ──
+scope:
+  project: text-block-timer
+  workspace: "d:\\work_frankthwang\\text-block-timer-dev\\.obsidian\\plugins\\text-block-timer"
+
+# ── 依赖 & 资源引用 ──
+dependencies:
+  execution_protocol: "doc/dev-skill-text-block-timer.md"
+  reference_docs:
+    - path: "doc/architecture.md"
+      description: "项目整体架构分析"
+    - path: "doc/PRD-timer-sidebar.md"
+      description: "已有 PRD 参考（Timer Sidebar）"
+    - path: "doc/tech-design-timer-sidebar.md"
+      description: "已有技术设计参考"
+  test_framework: "tests/e2e-timer-test.mjs"
+
+# ── 运行时控制命令 ──
+runtime_commands:
+  - command: "暂停"
+    effect: "暂停当前阶段，等待进一步指示"
+  - command: "继续"
+    effect: "从暂停处恢复执行"
+  - command: "返工 Phase N"
+    effect: "回退到 Phase N 重新执行"
+  - command: "跳过"
+    effect: "跳过当前阶段，进入下一阶段"
+  - command: "只测 [chain]"
+    effect: "Phase 8 只运行指定的测试链"
 ---
 
 # Text Block Timer 全流程开发 Skill
 
-## Overview
+> **本文件是 Skill 入口描述文件**，Agent 通过此文件识别 Skill 能力、触发条件和参数定义。
+> 详细的执行协议（角色指令、步骤、模板、检查清单）请参阅 →
+> [`dev-skill-text-block-timer.md`](./dev-skill-text-block-timer.md)
 
-This skill generates a full development pipeline from a one-line requirement, supporting **8 sequential phases** with different expert roles. Each phase produces artifacts that feed into the next, with automatic advancement and branch logic for rework.
+## 快速调用
 
-## Architecture: Single Project Pipeline
-
-```
-text-block-timer-dev-skill/
-├── SKILL.md                          # 本文件 — 主入口 & 全部工作流定义
-```
-
-### 核心原则
-
-| 维度 | 说明 |
-|------|------|
-| **技术栈** | TypeScript 5、esbuild、CodeMirror 6、Obsidian API、ECharts 5、IndexedDB |
-| **数据层** | 三层同步：Markdown HTML span ↔ timer-db.json ↔ IndexedDB |
-| **平台** | Obsidian 桌面 + 移动端（iOS/Android） |
-| **测试** | 自研 CDP E2E（tests/e2e-timer-test.mjs） |
-| **国际化** | 5 种语言（en/zh/zhTW/ja/ko） |
-
----
-
-## 项目上下文（所有阶段共享）
-
-### 项目元信息
-
-| 属性       | 值                                                                 |
-| ---------- | ------------------------------------------------------------------ |
-| 插件名称   | Text Block Timer                                                   |
-| 版本       | 1.0.9                                                              |
-| 作者       | frankthwang                                                        |
-| 平台       | Obsidian（桌面 + 移动端 iOS/Android）                              |
-| 技术栈     | TypeScript 5、esbuild、CodeMirror 6、Obsidian API、ECharts 5、IndexedDB |
-| 入口文件   | `src/main.ts`                                                      |
-| 构建命令   | `npm run dev`（watch）/ `npm run build`（production）              |
-| 测试框架   | 自研 CDP E2E（`tests/e2e-timer-test.mjs`，基于 Chrome DevTools Protocol） |
-| 数据存储   | Markdown 行内 HTML span + `timer-db.json`（JSON）+ IndexedDB（`TimerPluginDB`） |
-
-### 源码目录结构
-
-```
-src/
-├── main.ts                     # 插件入口，TimerPlugin 主类（协调者）
-├── core/
-│   ├── TimerDataUpdater.ts     # 纯函数状态机（init/continue/pause/update/restore/forcepause）
-│   ├── TimerManager.ts         # 内存计时器管理（setInterval tick）
-│   ├── TimerDatabase.ts        # JSON 数据库（timer-db.json 读写）
-│   ├── TimerIndexedDB.ts       # IndexedDB 数据库（timers + daily_dur 表）
-│   ├── TimerScanner.ts         # 全库扫描（解析 Vault 所有文件中的计时器）
-│   ├── TimerSummary.ts         # 汇总统计
-│   ├── TimerFileGroupFilter.ts # 文件组过滤
-│   ├── constants.ts            # 全局常量
-│   └── utils.ts                # 通用工具函数
-├── io/
-│   ├── TimerFileManager.ts     # 文件读写与位置管理
-│   ├── TimerParser.ts          # HTML 解析器
-│   ├── TimerRenderer.ts        # HTML 渲染器
-│   └── TimeFormatter.ts        # 时间格式化
-├── ui/
-│   ├── TimerSidebarView.ts     # 侧边栏视图（列表/统计/图表/筛选/排序）
-│   ├── TimerSettingTab.ts      # 设置面板
-│   ├── TimerWidget.ts          # CodeMirror 6 Widget
-│   └── TimePickerModal.ts      # 时间选择弹窗
-├── i18n/
-│   └── translations.ts         # 国际化（en/zh/zhTW/ja/ko）
-└── debug/
-    └── PerfMonitor.ts          # 性能监控（DEBUG 模式）
-```
-
-### 数据层架构
-
-```
-三层数据同步：
-  Markdown 行内 HTML  ←→  timer-db.json (JSON)  ←→  IndexedDB (TimerPluginDB)
-       ↑                        ↑                         ↑
-   源数据（持久化）        索引 + 快速查询           分天统计 + 图表数据
-```
-
-- **Markdown HTML span**：`<span class="timer-r" id="LzHk3a" data-dur="3600" data-ts="1740456240">【⏳01:00:00 】</span>`
-- **timer-db.json**：`{ timers: { [id]: {...} }, daily_dur: { [date]: { [id]: seconds } } }`
-- **IndexedDB**：`timers` store + `daily_dur` store，支持按 timer_id/stat_date 索引
-
-### 已有文档（可 read_file 参考）
-
-| 文件路径                              | 内容                            |
-| ------------------------------------- | ------------------------------- |
-| `doc/architecture.md`                 | 整体架构分析                    |
-| `doc/PRD-timer-sidebar.md`            | Timer Sidebar 的完整 PRD（v3.0）|
-| `doc/tech-design-timer-sidebar.md`    | Timer Sidebar 技术设计文档      |
-| `doc/implementation-plan.md`          | Timer Sidebar 实施计划          |
-
-### 关键约束（必须遵守）
-
-1. **不可使用 native 模块**（如 better-sqlite3），Obsidian 插件规范禁止
-2. **必须同时兼容桌面和移动端**（iOS/Android Obsidian），移动端不支持 native binding
-3. **CodeMirror 6 由 Obsidian 宿主提供**，不可自行 bundle（`external` 配置）
-4. **HTML span 嵌入 Markdown** 是核心设计约束，所有计时器数据通过行内 span 持久化
-5. **三层数据必须保持一致**：Markdown ↔ JSON ↔ IDB，任何修改需同步三层
-6. **国际化**：所有用户可见文本必须通过 `translations.ts` 支持 5 种语言
-7. **构建产物**：单文件 `main.js`（CJS 格式），通过 esbuild bundle
-8. **E2E 测试**：通过 CDP 连接真实 Obsidian 实例运行，测试链（chain）模式，支持按链选择性执行
-
----
-
-## System Instructions
-
-```
-你是 Text Block Timer 项目的全流程开发 Agent。当用户给出一句话需求时，你将按照 8 个阶段依次执行，每个阶段扮演不同的专家角色。你必须：
-
-1. 严格按照本 Skill 定义的阶段顺序、角色、输入输出和工具调用规范执行
-2. 新需求启动时，必须先执行 Phase 0 在 doc/ 下创建 {{feature_name}} 文件夹
-3. 每个阶段开始时，先声明当前阶段和角色身份
-4. 每个阶段结束时，输出 [Phase N 完成 ✅] 标记
-5. 阶段间的产出自动作为下一阶段的输入，不需要用户手动传递
-6. 遇到需要用户决策的问题时，暂停并明确提问
-7. 所有文档产出必须写入 doc/{{feature_name}}/ 目录，代码和测试脚本写入对应的 src/ 和 tests/ 目录
-```
-
----
-
-## Quick Reference: 工作流摘要
-
-```
-用户请求（一句话需求）
-    │
-    ▼
-[Phase 0] 初始化 → 创建 doc/{{feature_name}}/ 文件夹
-    │
-    ▼
-[Phase 1] PRD 撰写 → doc/{{feature_name}}/PRD-{{feature_name}}.md
-    │
-    ▼
-[Phase 2] UX Review → doc/{{feature_name}}/ux-review-{{feature_name}}.md
-    │
-    ▼
-[Phase 3] 数据设计 → doc/{{feature_name}}/data-schema-{{feature_name}}.md
-    │
-    ▼
-[Phase 4] 技术方案 → doc/{{feature_name}}/tech-design-{{feature_name}}.md
-    │
-    ▼
-[Phase 5] 架构 Review → doc/{{feature_name}}/arch-review-{{feature_name}}.md
-    │
-    ▼
-[Phase 6] 测试用例 → doc/{{feature_name}}/test-cases-{{feature_name}}.md
-    │
-    ▼
-[Phase 7] 编码开发 → 源码 + E2E 测试脚本
-    │
-    ▼
-[Phase 8] 测试验证 → 全通过→完成 | 失败→修复→重试(≤3轮)
-    │
-    ▼
-[🎉 全流程完成]
-```
-
-### 需求目录结构
-
-每个新需求启动时，必须在 `doc/` 下创建以 `{{feature_name}}` 命名的文件夹，所有该需求的文档产出都放在此文件夹下：
-
-```
-doc/
-└── {{feature_name}}/
-    ├── PRD-{{feature_name}}.md              ← Phase 1 产出
-    ├── ux-review-{{feature_name}}.md        ← Phase 2 产出
-    ├── data-schema-{{feature_name}}.md      ← Phase 3 产出
-    ├── tech-design-{{feature_name}}.md      ← Phase 4 产出
-    ├── arch-review-{{feature_name}}.md      ← Phase 5 产出
-    └── test-cases-{{feature_name}}.md       ← Phase 6 产出
-```
-
-### 执行模式
-
-- **完整流水线**: 从 Phase 0 到 Phase 8 依次执行（Phase 0 自动创建目录）
-- **指定起始阶段**: 从任意 Phase 开始（需提供前序产出，目录必须已存在）
-- **单阶段执行**: 仅执行指定的某个 Phase
-- **返工**: 回退到指定 Phase 重新执行
-- **跳过阶段**: 跳过不需要的阶段
-
-### 运行时控制命令
-
-| 命令         | 效果                           |
-| ------------ | ------------------------------ |
-| `暂停`       | 暂停当前阶段，等待进一步指示    |
-| `继续`       | 从暂停处恢复执行                |
-| `返工 Phase N` | 回退到 Phase N 重新执行       |
-| `跳过`       | 跳过当前阶段，进入下一阶段      |
-| `只测 [chain]` | Phase 8 只运行指定的测试链    |
-
----
-
-## Phase 0：初始化 — 创建需求文件夹
-
-**role**: 项目管理
-**input**: 用户的一句话需求描述
-**output**: `doc/{{feature_name}}/` 目录
-**completion_marker**: 自动完成，无需标记
-
-### Steps
-
-```
-1. PARSE:  从用户需求中提取 feature_name（英文短横线连接）
-2. CREATE: 调用 terminal 创建 doc/{{feature_name}}/ 目录
-3. GOTO:   进入 Phase 1
-```
-
----
-
-## Phase 1：产品经理 — 撰写 PRD
-
-**role**: 拥有 10 年经验的资深产品经理，精通 Obsidian 插件生态和效率工具产品设计
-**input**: 用户的一句话需求描述
-**output**: `doc/{{feature_name}}/PRD-{{feature_name}}.md`
-**completion_marker**: `[Phase 1 完成 ✅]`
-
-### Tools（需调用的工具）
-
-| 工具       | 用途                                          |
-| ---------- | --------------------------------------------- |
-| read_file  | 读取 `doc/architecture.md` 了解现有架构       |
-| read_file  | 读取 `doc/PRD-timer-sidebar.md` 参考已有 PRD 风格 |
-| edit_file  | 将 PRD 写入 `doc/{{feature_name}}/PRD-{{feature_name}}.md`     |
-
-### Steps
-
-```
-1. PARSE: 将一句话需求拆解为 → 核心意图、用户场景、预期价值
-2. READ:  调用 read_file 读取 doc/architecture.md + doc/PRD-timer-sidebar.md
-3. WRITE: 按照下方模板撰写完整 PRD
-4. REVIEW: 以产品总监视角执行自检清单，修正问题
-5. SAVE:  调用 edit_file 保存到 doc/{{feature_name}}/PRD-{{feature_name}}.md
-6. OUTPUT: 输出 [Phase 1 完成 ✅]
-```
-
-### PRD Template
-
-```markdown
-# 📋 PRD: {{feature_name}}
-
-**文档版本**: v1.0  |  **创建日期**: {{date}}  |  **状态**: 草稿  |  **优先级**: P[1/2/3]
-
-## 一、背景与目标
-### 1.1 需求来源
-### 1.2 核心痛点
-| 痛点 | 描述 |
-|------|------|
-### 1.3 目标
-
-## 二、用户故事
-| ID | 角色 | 故事 | 验收标准 |
-|----|------|------|----------|
-
-## 三、功能范围
-### 3.1 In Scope（本期）
-### 3.2 Out of Scope（明确排除）
-
-## 四、功能详细设计
-### 4.N [功能模块N]
-#### 行为描述
-#### 交互规则
-#### 边界条件与异常处理
-
-## 五、数据需求
-### 5.1 需要的新数据字段
-### 5.2 数据流向说明
-### 5.3 数据一致性要求
-
-## 六、移动端适配要求
-### 6.1 布局差异
-### 6.2 交互差异（触控 vs 鼠标）
-### 6.3 性能约束
-
-## 七、国际化要求
-（需要新增的 i18n key 列表）
-
-## 八、非功能需求
-### 8.1 性能（响应时间、内存占用）
-### 8.2 兼容性（Obsidian 最低版本、平台）
-### 8.3 可访问性
-
-## 九、验收标准总表
-| 编号 | 场景 | 预期结果 | 优先级 |
-|------|------|----------|--------|
-
-## 十、技术实现要点（产品视角）
-## 十一、开放问题
-```
-
-### Self-Review Checklist
-
-```
-- [ ] 用户故事是否覆盖所有核心场景？
-- [ ] 边界条件是否穷举？（空状态、大数据量、并发、跨天、网络断开）
-- [ ] 移动端场景是否充分考虑？
-- [ ] 与现有功能的兼容性是否明确？
-- [ ] 数据一致性要求是否清晰？（三层同步）
-- [ ] 国际化 key 是否完整？
-```
-
----
-
-## Phase 2：UI/UX 专家 — Review PRD 交互方案
-
-**role**: 拥有 8 年经验的资深 UI/UX 设计师，专注桌面效率工具和移动端适配，精通 Obsidian UI 模式
-**input**: Phase 1 产出的 `doc/{{feature_name}}/PRD-{{feature_name}}.md`
-**output**: `doc/{{feature_name}}/ux-review-{{feature_name}}.md`（UX Review 报告 + 对 PRD 的修改建议）
-**completion_marker**: `[Phase 2 完成 ✅]`
-
-### Tools
-
-| 工具            | 用途                                                      |
-| --------------- | --------------------------------------------------------- |
-| read_file       | 读取 Phase 1 产出的 PRD                                   |
-| read_file       | 读取 `src/ui/TimerSidebarView.ts`（了解现有 UI 模式）     |
-| read_file       | 读取 `styles.css`（了解现有样式）                          |
-| edit_file       | 将 UX Review 报告写入 `doc/{{feature_name}}/ux-review-{{feature_name}}.md` |
-| replace_in_file | 根据 UX Review 结果同步修改 PRD                            |
-
-### Steps
-
-```
-1. READ:  读取 PRD + 现有 UI 代码 + styles.css
-2. AUDIT: 按照下方检查清单逐项审查
-3. WRITE: 将 UX Review 报告（含所有 [UX-优化] 标注）写入 doc/{{feature_name}}/ux-review-{{feature_name}}.md
-4. FIX:   根据 Review 结果同步修改 PRD 中的相关章节，调用 replace_in_file
-5. OUTPUT: 输出 [Phase 2 完成 ✅]
-```
-
-### UX Review Checklist
-
-**桌面端**:
-```
-- [ ] 信息层级清晰（视觉权重：标题 > 内容 > 辅助信息）
-- [ ] 操作路径最短（核心操作 ≤ 2 步）
-- [ ] 空状态有引导
-- [ ] 与 Obsidian 原生 UI 风格一致
-- [ ] 快捷键 / 命令面板集成
-- [ ] 深色/浅色主题兼容
-```
-
-**移动端专项**:
-```
-- [ ] 触摸目标尺寸 ≥ 44×44px
-- [ ] 滑动手势不与 Obsidian 原生手势冲突
-- [ ] 小屏幕（320px 宽）下布局降级
-- [ ] 长按 vs 点击 vs 右键的交互映射
-- [ ] 虚拟键盘弹出时布局正确
-```
-
-**交互状态**:
-```
-- [ ] 加载态、空态、错误态、成功态都有设计
-- [ ] 动画/过渡适度
-- [ ] 危险操作有二次确认
-- [ ] 输入框有合理 placeholder 和校验提示
-```
-
-### UX Review Document Template
-
-写入 `doc/{{feature_name}}/ux-review-{{feature_name}}.md`：
-
-```markdown
-# 🎨 UX Review 报告：{{feature_name}}
-
-**Review 日期**: {{date}} | **PRD 版本**: v1.0
-
-## 一、Review 总览
-| 维度 | 评级 | 主要问题 |
-|------|------|----------|
-
-## 二、桌面端 Review
-## 三、移动端 Review
-## 四、交互状态 Review
-## 五、优化建议汇总
-| 编号 | 原文描述 | 优化后描述 | 原因 | PRD 章节 |
-|------|----------|-----------|------|----------|
-
-## 六、结论
-```
-
-### PRD Modification Format
-
-在同步修改 PRD 时，使用以下标注格式：
-
-```markdown
-> [UX-优化] 原文描述... → 优化后描述...
-> 原因：...
-```
-
----
-
-## Phase 3：数仓分析师 — 表需求设计
-
-**role**: 资深数据仓库工程师兼数据分析师，精通 IndexedDB schema 设计，深知 Obsidian 数据存储限制
-**input**: Phase 2 优化后的 PRD
-**output**: `doc/{{feature_name}}/data-schema-{{feature_name}}.md`
-**completion_marker**: `[Phase 3 完成 ✅]`
-
-### Tools
-
-| 工具            | 用途                                               |
-| --------------- | -------------------------------------------------- |
-| read_file       | 读取 PRD 数据需求章节                               |
-| read_file       | 读取 `src/core/TimerDatabase.ts`（JSON 层 schema）  |
-| read_file       | 读取 `src/core/TimerIndexedDB.ts`（IDB 层 schema）  |
-| edit_file       | 将数据表需求写入 `doc/{{feature_name}}/data-schema-{{feature_name}}.md` |
-
-### Steps
-
-```
-1. READ:  读取 PRD 数据需求 + 现有数据层代码
-2. ANALYZE: 分析现有 schema，确定变更点
-3. DESIGN: 按照下方模板输出数据表需求
-4. SAVE:  调用 edit_file 保存到 doc/{{feature_name}}/data-schema-{{feature_name}}.md
-5. OUTPUT: 输出 [Phase 3 完成 ✅]
-```
-
-### Data Schema Template
-
-```markdown
-## 数据表需求：{{feature_name}}
-
-### 一、现有 Schema 分析
-#### 1.1 timer-db.json 现有结构
-#### 1.2 IndexedDB 现有 store
-
-### 二、新增/变更 Schema
-#### 2.1 JSON 层变更
-| 字段名 | 类型 | 默认值 | 用途 | 索引需求 |
-|--------|------|--------|------|----------|
-
-#### 2.2 IndexedDB 层变更
-| store 名 | keyPath | 索引 | 变更类型 |
-|----------|---------|------|----------|
-
-#### 2.3 数据迁移方案
-
-### 三、查询场景分析
-| 场景 | 查询条件 | 期望响应时间 | 数据量预估 |
-|------|----------|-------------|-----------|
-
-### 四、数据一致性保障
-#### 4.1 三层同步策略
-#### 4.2 冲突解决规则
-#### 4.3 异常恢复方案
-```
-
----
-
-## Phase 4：架构师 — 撰写技术方案
-
-**role**: 资深前端架构师，8 年 TypeScript 大型项目经验，精通 Obsidian Plugin API / CM6 / Web 性能优化
-**input**: Phase 2 的 PRD + Phase 3 的 `doc/{{feature_name}}/data-schema-{{feature_name}}.md`
-**output**: `doc/{{feature_name}}/tech-design-{{feature_name}}.md`
-**completion_marker**: `[Phase 4 完成 ✅]`
-
-### Tools
-
-| 工具            | 用途                                                        |
-| --------------- | ----------------------------------------------------------- |
-| read_file       | 读取 PRD + Phase 3 数据需求                                  |
-| read_file       | 读取 `doc/architecture.md` + `doc/tech-design-timer-sidebar.md` |
-| codebase_search | 搜索需求涉及的模块源码                                       |
-| read_file       | 深度阅读涉及的 `.ts` 文件                                    |
-| edit_file       | 将技术方案写入 `doc/{{feature_name}}/tech-design-{{feature_name}}.md` |
-
-### Steps
-
-```
-1. READ:    读取 PRD + 数据表需求 + 现有架构文档
-2. EXPLORE: 使用 codebase_search + read_file 深度阅读涉及的源码模块
-3. DESIGN:  按照下方模板撰写完整技术方案
-4. SAVE:    调用 edit_file 保存到 doc/{{feature_name}}/tech-design-{{feature_name}}.md
-5. OUTPUT:  输出 [Phase 4 完成 ✅]
-```
-
-### Tech Design Template
-
-```markdown
-# 🛠️ 技术设计文档：{{feature_name}}
-
-**文档版本**: v1.0 | **创建日期**: {{date}} | **对应 PRD**: PRD-{{feature_name}}.md | **状态**: 草稿
-
-## 一、PRD 技术方案勘误
-## 二、架构概述
-### 2.1 受影响的模块（文件 + 变更摘要）
-### 2.2 新增模块（文件路径 + 职责）
-### 2.3 模块依赖关系图（Mermaid）
-
-## 三、接口设计
-### 3.1 新增/修改的公开接口（TypeScript 签名 + JSDoc）
-### 3.2 内部接口
-
-## 四、数据流设计
-### 4.1 核心数据流（Mermaid sequenceDiagram）
-### 4.2 状态管理（状态机图）
-
-## 五、详细实现设计
-### 5.N [模块N] → 改动点 / 实现伪代码 / 边界处理
-
-## 六、性能设计
-### 6.1 性能目标  |  6.2 优化策略  |  6.3 性能风险与缓解
-
-## 七、兼容性设计
-### 7.1 向后兼容  |  7.2 数据迁移  |  7.3 版本升级路径
-
-## 八、错误处理
-### 8.1 错误分级  |  8.2 错误恢复  |  8.3 日志/调试
-
-## 九、实现计划
-| 任务编号 | 任务名 | 前置依赖 | 预估工时 | 涉及文件 |
-|---------|--------|---------|---------|---------|
-```
-
----
-
-## Phase 5：首席架构师 — Review 技术方案
-
-**role**: 全球顶级资深架构师，15+ 年大规模前端/Electron/浏览器存储优化实战经验
-**input**: Phase 4 的 `doc/{{feature_name}}/tech-design-{{feature_name}}.md` + 所有相关源码
-**output**: `doc/{{feature_name}}/arch-review-{{feature_name}}.md`（Review 报告）+ 修复后的技术方案
-**completion_marker**: `[Phase 5 完成 ✅]`
-
-### Tools
-
-| 工具            | 用途                                        |
-| --------------- | ------------------------------------------- |
-| read_file       | 读取技术方案                                 |
-| codebase_search | 验证方案中涉及的代码逻辑                     |
-| read_file       | 读取相关源码文件                              |
-| edit_file       | 将 Review 报告写入 `doc/{{feature_name}}/arch-review-{{feature_name}}.md` |
-| replace_in_file | 修复技术方案中的问题                          |
-
-### Steps
-
-```
-1. READ:    读取技术方案 + 涉及的源码
-2. REVIEW:  按 5 个维度逐项审查（见下方）
-3. JUDGE:   给出结论：
-            - ✅ 通过 → 进入 Phase 6
-            - ⚠️ 有条件通过 → 自动修复 Must Fix 项，然后进入 Phase 6
-            - ❌ 需重大修改 → 自动跳回 Phase 4 重写
-4. WRITE:   将 Review 报告写入 doc/{{feature_name}}/arch-review-{{feature_name}}.md
-5. FIX:     如需修复，调用 replace_in_file 修改技术方案
-6. OUTPUT:  输出 [Phase 5 完成 ✅]
-```
-
-### Review Dimensions
-
-**A. 架构健康度**:
-```
-- [ ] 是否违反单一职责？新代码是否在正确模块中？
-- [ ] 是否引入循环依赖？
-- [ ] 是否与现有架构风格一致？（协调者模式、纯函数状态机、三层数据同步）
-- [ ] 模块耦合度可控？
-```
-
-**B. 性能风险**:
-```
-- [ ] 主线程阻塞风险？（Electron 渲染进程）
-- [ ] 大数据量（10000+ 计时器）性能？
-- [ ] 内存泄漏风险？（事件监听/定时器清理）
-- [ ] 移动端后台节流、内存限制？
-```
-
-**C. 数据安全**:
-```
-- [ ] 三层同步一致性窗口？
-- [ ] 崩溃/强退数据恢复？
-- [ ] 并发写入保护？
-```
-
-**D. 边界情况**:
-```
-- [ ] 跨天场景？
-- [ ] 空/大/异常数据防御？
-- [ ] 文件被外部修改/删除时容错？
-- [ ] Obsidian 版本向后兼容？
-```
-
-**E. 可测试性**:
-```
-- [ ] 核心逻辑可被 E2E 覆盖？
-- [ ] 有适合 mock 的接口边界？
-```
-
-### Review Output Format
-
-写入 `doc/{{feature_name}}/arch-review-{{feature_name}}.md`：
-
-```markdown
-# 🔍 架构 Review 报告：{{feature_name}}
-
-**Review 日期**: {{date}} | **技术方案版本**: v1.0
-
-## Review 总评
-## 关键问题（Must Fix）
-### Issue-N: [标题]
-- **位置**: | **问题**: | **风险等级**: 🔴/🟡/🟢 | **建议方案**:
-
-## 优化建议（Nice to Have）
-## 结论: ✅ / ⚠️ / ❌
-```
-
-### Branch Logic
-
-```
-IF conclusion == "✅":
-    GOTO Phase 6
-ELIF conclusion == "⚠️":
-    AUTO_FIX must_fix_issues in tech_design
-    GOTO Phase 6
-ELIF conclusion == "❌":
-    GOTO Phase 4  # 重写技术方案
-```
-
----
-
-## Phase 6：产品 + 测试团队 — 撰写测试用例
-
-**role**: 产品经理 + QA 测试负责人，将验收标准转化为可执行测试用例
-**input**: Phase 2 的 PRD + Phase 5 的技术方案
-**output**: `doc/{{feature_name}}/test-cases-{{feature_name}}.md`
-**completion_marker**: `[Phase 6 完成 ✅]`
-
-### Tools
-
-| 工具       | 用途                                                  |
-| ---------- | ----------------------------------------------------- |
-| read_file  | 读取 PRD 验收标准 + 技术方案                            |
-| read_file  | 读取 `tests/e2e-timer-test.mjs` 了解现有测试模式        |
-| edit_file  | 将测试用例写入 `doc/{{feature_name}}/test-cases-{{feature_name}}.md` |
-
-### Steps
-
-```
-1. READ:    读取 PRD 验收标准 + 技术方案边界 + 现有 E2E 测试代码
-2. DESIGN:  设计测试用例覆盖功能/边界/异常/性能/兼容性
-3. PLAN:    设计 E2E 自动化测试链（chain）及断言策略
-4. SAVE:    调用 edit_file 保存到 doc/{{feature_name}}/test-cases-{{feature_name}}.md
-5. OUTPUT:  输出 [Phase 6 完成 ✅]
-```
-
-### Test Case Template
-
-```markdown
-# ✅ 测试用例：{{feature_name}}
-
-## 一、测试范围
-### In Scope / Out of Scope
-
-## 二、测试用例
-### TC-[编号]: [用例名称]
-- **前置条件**: ...
-- **操作步骤**: 1. ... 2. ...
-- **预期结果**: ...
-- **优先级**: P0/P1/P2
-- **类型**: 功能/边界/异常/性能/兼容性
-- **可自动化**: 是/否
-- **自动化实现提示**: （CDP E2E 中如何验证）
-
-## 三、E2E 自动化测试链设计
-### 测试链划分
-| 链名 | 包含用例 | 依赖链 | 预估时长 |
-|------|---------|--------|---------|
-
-### 断言策略
-- IDB 层: `idbGetTimer(id)` / `idbGetDailyByTimer(id)`
-- JSON 层: `app.plugins.plugins['text-block-timer'].database.data`
-- UI 层: DOM 查询 + innerText
-- 跨层一致性: IDB == JSON == Markdown
-
-## 四、移动端测试要点
-```
-
----
-
-## Phase 7：资深开发 — 功能开发 + E2E 脚本开发
-
-**role**: 资深全栈开发，精通 TypeScript / Obsidian API / CM6 / ECharts / IDB / 自动化测试
-**input**: Phase 5 的 `doc/{{feature_name}}/tech-design-{{feature_name}}.md` + Phase 6 的 `doc/{{feature_name}}/test-cases-{{feature_name}}.md`
-**output**: 源码文件 + E2E 测试脚本
-**completion_marker**: `[Phase 7 完成 ✅]`
-
-### Tools
-
-| 工具            | 用途                                     |
-| --------------- | ---------------------------------------- |
-| read_file       | 读取技术方案 + 测试用例 + 现有源码         |
-| codebase_search | 查找需要修改的代码位置                     |
-| edit_file       | 创建/修改源码文件                          |
-| replace_in_file | 精确修改现有代码                           |
-| multi_replace   | 批量修改同一文件多处                       |
-| terminal        | 运行 `npm run build` 构建验证              |
-| terminal        | 运行 `node tests/e2e-timer-test.mjs` 测试  |
-
-### Steps
-
+### 完整流水线
 ```
-1. READ:   读取技术方案的实现计划（Phase 4 第九章）
-2. FOR EACH task IN implementation_plan:
-   a. READ:  阅读涉及文件的当前代码
-   b. CODE:  按技术方案编写/修改代码
-   c. BUILD: 调用 terminal 执行 npm run build，验证编译通过
-   d. IF build_failed: 修复编译错误，重新 build
-3. WRITE_TESTS: 按测试用例实现 E2E 测试链
-4. BUILD: 最终构建验证
-5. OUTPUT: 输出 [Phase 7 完成 ✅]
+请基于 dev-skill-text-block-timer.md 执行开发流水线：[一句话需求]
 ```
 
-### Coding Standards（必须遵守）
-
-**代码风格**:
-```
-- 遵循现有项目代码风格（从现有文件推断）
-- 注释使用英文
-- 函数 JSDoc 注释必须包含 @param 和 @returns
-- 新增用户可见文本必须添加 i18n key（translations.ts，5 种语言）
+### 从指定阶段开始
 ```
-
-**三层同步规范**:
-```typescript
-// 任何修改计时器数据的操作，必须同步更新三层：
-// 1. Markdown → TimerFileManager
-await this.fileManager.writeTimer(view, file, lineNum, timerId, newData);
-// 2. JSON → TimerDatabase
-await this.database.upsertTimer(timerId, dbRecord);
-// 3. IDB → TimerIndexedDB
-await this.idb.upsertTimer(idbRecord);
+请从 Phase 4 开始执行，PRD 在 doc/PRD-xxx.md
 ```
 
-**E2E 测试脚本规范**:
+### 单独执行某阶段
 ```
-- 测试文件: tests/e2e-timer-test.mjs
-- 以 chain（测试链）组织，每个 chain 是一组必须连续执行的测试
-- 新增 chain 必须在 CHAIN_REGISTRY 注册并加入 ALL_CHAINS
-- IDB 断言: idbGetTimer(id) / idbGetDailyByTimer(id)
-- JSON 断言: runner.eval 读取 plugin.database.data
-- UI 断言: runner.eval 查询 DOM
-- 每个 chain 结束必须清理测试数据
-- Date monkey-patch（跨天测试）参考现有 chain_crossday
+请只执行 Phase 1，需求是：[...]
 ```
 
-**构建验证**:
+### 返工某阶段
 ```
-- 每次修改 .ts 文件后运行 npm run build
-- 修改 esbuild.config.mjs 的 external 列表时特别注意
+Phase 3 的数据表设计有问题，请基于以下反馈重做：[...]
 ```
-
----
 
-## Phase 8：测试执行 — 功能验证
-
-**role**: 自动化测试工程师，执行 E2E 测试并分析失败原因
-**input**: Phase 7 产出的代码 + E2E 测试脚本（源码在 src/，测试在 tests/）
-**output**: 测试报告
-**completion_marker**: `[Phase 8 完成 ✅]` 或失败报告
-
-### Tools
-
-| 工具     | 用途                                         |
-| -------- | -------------------------------------------- |
-| terminal | 运行 `npm run build`                          |
-| terminal | 运行 `node tests/e2e-timer-test.mjs [chain]`  |
-| read_file| 读取失败日志定位问题                            |
-
-### Steps
-
+### 跳过阶段
 ```
-1. BUILD:   调用 terminal 执行 npm run build
-2. TEST:    调用 terminal 执行 node tests/e2e-timer-test.mjs [chain_name]
-3. ANALYZE: 分析测试结果
-   IF all_passed:
-       OUTPUT: [Phase 8 完成 ✅] 所有测试通过
-       OUTPUT: [🎉 全流程完成]
-   ELIF has_failures:
-       DIAGNOSE: 分析失败日志，区分代码 bug vs 测试用例问题
-       FIX: 修复代码或测试脚本
-       RETRY: 重新执行步骤 1-2（最多 3 轮）
-       IF retry_count > 3:
-           OUTPUT: 失败报告（见下方格式），等待用户决策
-4. REGRESSION (optional): 运行全量回归 node tests/e2e-timer-test.mjs
+请跳过 Phase 2 和 Phase 3，直接从 Phase 4 开始
 ```
-
-### Failure Report Format
-
-```markdown
-## 🔴 测试失败报告
 
-### 环境
-- Obsidian 版本: ... | 插件版本: ... | 运行时间: ...
+## 流水线概览
 
-### 失败用例
-| 链 | 用例 | 错误信息 | 根因分析 | 修复方案 |
-|----|------|----------|----------|----------|
-
-### 修复尝试记录
-（每轮修复的操作和结果）
+```mermaid
+graph LR
+    U["🗣️ 需求"] --> P1["Phase 1<br/>PRD"]
+    P1 --> P2["Phase 2<br/>UX Review"]
+    P2 --> P3["Phase 3<br/>数据设计"]
+    P3 --> P4["Phase 4<br/>技术方案"]
+    P4 --> P5["Phase 5<br/>架构 Review"]
+    P5 -->|"✅/⚠️"| P6["Phase 6<br/>测试用例"]
+    P5 -->|"❌"| P4
+    P6 --> P7["Phase 7<br/>编码开发"]
+    P7 --> P8["Phase 8<br/>测试验证"]
+    P8 -->|"失败"| P7
+    P8 -->|"✅"| DONE["🎉 完成"]
 ```
-
----
-
-## Resources
-
-### 已有文档
-
-- `doc/architecture.md` — 项目整体架构分析。**Phase 1/4 必读。**
-- `doc/PRD-timer-sidebar.md` — Timer Sidebar PRD v3.0。**Phase 1 参考 PRD 风格。**
-- `doc/tech-design-timer-sidebar.md` — Timer Sidebar 技术设计。**Phase 4 参考技术方案风格。**
-- `doc/implementation-plan.md` — Timer Sidebar 实施计划。
-
-### 核心源码
-
-- `src/main.ts` — 插件入口，TimerPlugin 主类（协调者）
-- `src/core/TimerDataUpdater.ts` — 纯函数状态机
-- `src/core/TimerManager.ts` — 内存计时器管理
-- `src/core/TimerDatabase.ts` — JSON 数据库
-- `src/core/TimerIndexedDB.ts` — IndexedDB 数据库
-- `src/ui/TimerSidebarView.ts` — 侧边栏视图
-- `src/i18n/translations.ts` — 国际化
-- `tests/e2e-timer-test.mjs` — E2E 测试脚本
