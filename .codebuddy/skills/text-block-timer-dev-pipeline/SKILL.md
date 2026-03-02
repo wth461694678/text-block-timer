@@ -23,7 +23,7 @@ text-block-timer-dev-skill/
 | **技术栈** | TypeScript 5、esbuild、CodeMirror 6、Obsidian API、ECharts 5、IndexedDB |
 | **数据层** | 三层同步：Markdown HTML span ↔ timer-db.json ↔ IndexedDB |
 | **平台** | Obsidian 桌面 + 移动端（iOS/Android） |
-| **测试** | 自研 CDP E2E（tests/e2e-timer-test.mjs） |
+| **测试** | 自研 CDP E2E（tests/e2e-timer-test.mjs + tests/chains/*.mjs，模块化测试链架构） |
 | **国际化** | 5 种语言（en/zh/zhTW/ja/ko） |
 
 ### 通用约束
@@ -47,7 +47,7 @@ text-block-timer-dev-skill/
 | 技术栈     | TypeScript 5、esbuild、CodeMirror 6、Obsidian API、ECharts 5、IndexedDB |
 | 入口文件   | `src/main.ts`                                                      |
 | 构建命令   | `npm run dev`（watch）/ `npm run build`（production）              |
-| 测试框架   | 自研 CDP E2E（`tests/e2e-timer-test.mjs`，基于 Chrome DevTools Protocol） |
+| 测试框架   | 自研 CDP E2E（主入口 `tests/e2e-timer-test.mjs` + 链模块 `tests/chains/*.mjs`，基于 Chrome DevTools Protocol，自动启动 Obsidian） |
 | 数据存储   | Markdown 行内 HTML span + `timer-db.json`（JSON）+ IndexedDB（`TimerPluginDB`） |
 
 ### 源码目录结构
@@ -672,7 +672,8 @@ M1 阶段名称
 | 工具       | 用途                                                  |
 | ---------- | ----------------------------------------------------- |
 | read_file  | 读取 PRD 验收标准 + 技术方案                            |
-| read_file  | 读取 `tests/e2e-timer-test.mjs` 了解现有测试模式        |
+| read_file  | 读取 `tests/e2e-timer-test.mjs`（主入口）了解测试框架基础设施 |
+| read_file  | 读取 `tests/chains/*.mjs` 了解现有测试链模式               |
 | edit_file  | 将测试用例写入 `doc/{{feature_name}}/stage7-test-cases.md`     |
 
 ### Steps
@@ -775,11 +776,40 @@ await this.idb.upsertTimer(idbRecord);
 
 **E2E 测试脚本规范**:
 ```
-- 测试文件: tests/e2e-timer-test.mjs
-- 以 chain（测试链）组织，每个 chain 是一组必须连续执行的测试
-- 新增 chain 必须在 CHAIN_REGISTRY 注册并加入 ALL_CHAINS
+- 主入口文件: tests/e2e-timer-test.mjs（CDP 连接、TestRunner、IDB 辅助函数、链注册/调度、Obsidian 自动启动）
+- 链模块目录: tests/chains/<chain_name>.mjs（每个测试链独立一个文件）
+- 每个链文件从主入口 import 共享的 sleep/assert/log/常量/IDB 辅助函数/shared 状态
+- 每个链文件 export 一个 async function chain_xxx(runner) 函数
+- 新增 chain 步骤：
+  1. 创建 tests/chains/<chain_name>.mjs 文件
+  2. import 所需的共享函数和常量
+  3. export async function chain_<name>(runner) { ... }
+  4. 在主入口的 CHAIN_REGISTRY 注册新链
+  5. 在主入口顶部添加 import 语句
 - 每个 chain 结束必须清理测试数据
-- Date monkey-patch（跨天测试）参考现有 chain_crossday
+- Date monkey-patch（跨天测试）参考现有 chains/crossday.mjs
+- 所有计时器操作必须使用 toggle-timer 命令，禁止手动 startTimer/stopTimer
+- 主入口自动检测 Obsidian 是否运行，未运行则通过 Start-Process 启动并等待 CDP 就绪
+```
+
+**可用测试链清单**:
+```
+- preflight:          插件加载、编辑器、IDB 就绪检查
+- basic:              CRUD 生命周期、侧边栏列表/摘要、IDB 一致性
+- adjust:             手动设置时长 + IDB adjustDailyDur
+- seed:               seedIndexedDB / clearAll 清除过期数据
+- delete:             删除计时器、侧边栏移除、最终一致性
+- crossday:           跨午夜计时器（Date monkey-patch）
+- crossday_adjust:    多天计时器 toggle start/pause + 手动增减分天分配
+- sidebar_tabs:       作用域切换、筛选/排序、摘要、图表数据、统计开关
+- readonly:           预览/阅读模式下计时器继续 tick
+- passive_delete:     被动删除（编辑器中删除 span）的数据清理
+- checkbox:           复选框勾选触发暂停/恢复
+- crash_recovery:     崩溃恢复（running 状态持久化 + 恢复）
+- settings_behavior:  设置行为（timerTextPosition 等）
+- restore_behavior:   autoStopTimers 恢复行为（quit/close/never）
+- onunload_behavior:  onunload 刷新 running timer 数据到 JSON
+- cleanup_basic:      basic/adjust/seed/delete 链的共享清理
 ```
 
 **测试操作方式规范（强制）**:
@@ -831,22 +861,21 @@ await this.idb.upsertTimer(idbRecord);
 
 ### Obsidian 调试模式启动
 
-> 执行 E2E 测试前，**必须**先确保 Obsidian 以远程调试模式启动：
+> 测试框架会**自动检测**并启动 Obsidian 调试模式。无需手动启动。
+> 主入口文件 `tests/e2e-timer-test.mjs` 的 `main()` 函数会：
+> 1. 检查 CDP 端口（127.0.0.1:9222）是否已有 Obsidian 在运行
+> 2. 如未运行，通过 `Start-Process` 自动启动 Obsidian 并附带 `--remote-debugging-port=9222`
+> 3. 轮询等待最多 60 秒直到 CDP 就绪
 >
+> 如果需要手动启动：
 > ```
-> "C:\Users\frankthwang\AppData\Local\Programs\Obsidian\Obsidian.exe" --remote-debugging-port=9222
+> Start-Process "C:\Users\frankthwang\AppData\Local\Programs\Obsidian\Obsidian.exe" -ArgumentList "--remote-debugging-port=9222"
 > ```
->
-> 测试脚本通过 CDP（Chrome DevTools Protocol）连接到此端口进行自动化操作。
-> 如果 Obsidian 未以调试模式运行，测试将无法连接。
 
 ### Steps
 
 ```
-0. LAUNCH:  通过 terminal 启动 Obsidian 调试模式（如果尚未启动）：
-            "C:\Users\frankthwang\AppData\Local\Programs\Obsidian\Obsidian.exe" --remote-debugging-port=9222
-            等待 Obsidian 完全加载后再继续。
-1. BUILD:   调用 terminal 执行 npm run build
+1. BUILD:   调用 terminal 执行 npm run build（Obsidian 自动启动由测试框架处理）
 2. TEST:    调用 terminal 执行 node tests/e2e-timer-test.mjs [chain_name]
 3. ANALYZE: 分析测试结果
    IF all_passed:
@@ -906,4 +935,5 @@ await this.idb.upsertTimer(idbRecord);
 - `src/core/TimerIndexedDB.ts` — IndexedDB 数据库
 - `src/ui/TimerSidebarView.ts` — 侧边栏视图
 - `src/i18n/translations.ts` — 国际化
-- `tests/e2e-timer-test.mjs` — E2E 测试脚本
+- `tests/e2e-timer-test.mjs` — E2E 测试主入口（基础设施 + 链注册 + 调度器 + Obsidian 自动启动）
+- `tests/chains/*.mjs` — E2E 测试链模块（每个测试链独立文件，共 16 个）
