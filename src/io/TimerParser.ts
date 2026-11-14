@@ -1,8 +1,38 @@
 import { TimerData } from '../core/TimerDataUpdater';
+import { tableTarget } from './TableCell';
 import { compressId } from '../core/utils';
 
 // —— Utility: Parse existing span data —— //
 export class TimerParser {
+    static parseAll(text: string): TimerData[] {
+        const timers: TimerData[] = [];
+        const spans = /<span\b[^>]*>[^<]*<\/span>/g;
+        let match: RegExpExecArray | null;
+        while ((match = spans.exec(text)) !== null) {
+            const parsed = this.parse(match[0]);
+            if (parsed) {
+                parsed.beforeIndex! += match.index;
+                parsed.afterIndex! += match.index;
+                timers.push(parsed);
+            }
+        }
+        return timers;
+    }
+
+    static parseAtCursor(editor: any, line: number, ch: number): TimerData | null {
+        const text = editor.getLine(line);
+        const target = tableTarget(editor, line, ch);
+        if (!target) return this.parse(text);
+        if (!target.cell) return null;
+        const { from, to } = target.cell;
+        const parsed = this.parse(text.slice(from, to));
+        if (parsed) {
+            parsed.beforeIndex! += from;
+            parsed.afterIndex! += from;
+        }
+        return parsed;
+    }
+
     static parse(lineText: string, version: 'v1' | 'v2' | 'auto' = 'auto', targetTimerId: string | null = null): TimerData | null {
         const tpl = document.createElement('template');
         tpl.innerHTML = lineText.trim();

@@ -1,3 +1,4 @@
+import { tableTarget } from './io/TableCell';
 import { Plugin, Notice, FileView, TFile, WorkspaceLeaf } from 'obsidian';
 import { EditorView } from '@codemirror/view';
 
@@ -170,7 +171,8 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
                 const cursor = editor.getCursor();
                 const lineNum = cursor.line;
                 const lineText = editor.getLine(lineNum);
-                const parsed = TimerParser.parse(lineText, 'auto');
+                if (tableTarget(editor, lineNum, cursor.ch)?.cell === null) return;
+                const parsed = TimerParser.parseAtCursor(editor, lineNum, cursor.ch);
 
                 if (parsed) {
                     if (parsed.class === 'timer-r') {
@@ -193,7 +195,8 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
                 const cursor = editor.getCursor();
                 const lineNum = cursor.line;
                 const lineText = editor.getLine(lineNum);
-                const parsed = TimerParser.parse(lineText, 'auto');
+                if (tableTarget(editor, lineNum, cursor.ch)?.cell === null) return;
+                const parsed = TimerParser.parseAtCursor(editor, lineNum, cursor.ch);
                 this.handleDelete(view, lineNum, parsed);
             },
         });
@@ -207,7 +210,8 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
                 const cursor = editor.getCursor();
                 const lineNum = cursor.line;
                 const lineText = editor.getLine(lineNum);
-                const parsed = TimerParser.parse(lineText, 'auto');
+                if (tableTarget(editor, lineNum, cursor.ch)?.cell === null) return;
+                const parsed = TimerParser.parseAtCursor(editor, lineNum, cursor.ch);
 
                 if (parsed && parsed.class === 'timer-p') {
                     const backfillLang = getTranslation('timeBackfill');
@@ -407,7 +411,8 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
         const cursor = editor.getCursor();
         const lineNum = cursor.line;
         const lineText = editor.getLine(lineNum);
-        const parsed = TimerParser.parse(lineText, 'auto');
+        if (tableTarget(editor, lineNum, cursor.ch)?.cell === null) return;
+        const parsed = TimerParser.parseAtCursor(editor, lineNum, cursor.ch);
         const className = parsed ? parsed.class : null;
 
         menu.addSeparator();
@@ -898,18 +903,21 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
 
         for (let i = 0; i < lineCount; i++) {
             const lineText = editor.getLine(i);
-            const parsed = TimerParser.parse(lineText, 'auto');
-            if (parsed && parsed.class === 'timer-r') {
-                if (this.settings.autoStopTimers === 'never') {
-                    this.handleRestore(view, i, parsed);
-                } else if (this.settings.autoStopTimers === 'quit') {
-                    if (this.manager.isStartedInThisSession(parsed.timerId)) {
+            for (const timer of TimerParser.parseAll(lineText)) {
+                // Earlier replacements on this row can change subsequent span offsets.
+                const parsed = TimerParser.parse(editor.getLine(i), 'auto', timer.timerId);
+                if (parsed && parsed.class === 'timer-r') {
+                    if (this.settings.autoStopTimers === 'never') {
                         this.handleRestore(view, i, parsed);
-                    } else {
+                    } else if (this.settings.autoStopTimers === 'quit') {
+                        if (this.manager.isStartedInThisSession(parsed.timerId)) {
+                            this.handleRestore(view, i, parsed);
+                        } else {
+                            this.handleForcePause(view, i, parsed);
+                        }
+                    } else if (this.settings.autoStopTimers === 'close') {
                         this.handleForcePause(view, i, parsed);
                     }
-                } else if (this.settings.autoStopTimers === 'close') {
-                    this.handleForcePause(view, i, parsed);
                 }
             }
         }

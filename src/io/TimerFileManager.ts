@@ -1,3 +1,4 @@
+import { tableTarget } from './TableCell';
 import { App, TFile } from 'obsidian';
 import { Transaction } from '@codemirror/state';
 import { TimerData } from '../core/TimerDataUpdater';
@@ -26,35 +27,23 @@ export class TimerFileManager {
     async writeTimer(timerId: string, timerData: TimerData, view: any, file: TFile, lineNum: number, parsedResult: TimerData | null = null): Promise<string> {
         if (view.getMode && view.getMode() === 'preview') {
             // ===== Preview mode =====
-            const content = await this.app.vault.read(file);
-            const lines = content.split('\n');
-            let modified = false;
-            const line = lines[lineNum];
             const newSpan = TimerRenderer.render(timerData, this.settings);
-            const timerRE = /<span class="timer-[rp]"[^>]*>.*?<\/span>/;
-
-            if (line.match(timerRE)) {
-                lines[lineNum] = line.replace(timerRE, newSpan);
-                modified = true;
-            } else if (parsedResult === null) {
-                const position = this.calculateInsertPosition(
-                    { getLine: () => line },
-                    0,
-                    this.settings.timerInsertLocation
-                );
-                if (position.before === 0) {
-                    lines[lineNum] = newSpan + line;
-                } else if (position.before === line.length) {
-                    lines[lineNum] = line + newSpan;
-                } else {
-                    lines[lineNum] = line.substring(0, position.before) + newSpan + line.substring(position.before);
+            await this.app.vault.process(file, content => {
+                const lines = content.split('\n');
+                // Re-find by ID inside the atomic update, since another timer may
+                // have changed the row length while this write was waiting.
+                const index = lines.findIndex(line => TimerParser.parse(line, 'auto', timerId) !== null);
+                if (index >= 0) {
+                    const line = lines[index];
+                    const existing = TimerParser.parse(line, 'auto', timerId)!;
+                    lines[index] = line.slice(0, existing.beforeIndex) + newSpan + line.slice(existing.afterIndex);
+                } else if (parsedResult === null && lines[lineNum] !== undefined) {
+                    const line = lines[lineNum];
+                    const position = this.calculateInsertPosition({ getLine: () => line }, 0, this.settings.timerInsertLocation);
+                    lines[lineNum] = line.slice(0, position.before) + newSpan + line.slice(position.before);
                 }
-                modified = true;
-            }
-
-            if (modified) {
-                await this.app.vault.modify(file, lines.join('\n'));
-            }
+                return lines.join('\n');
+            });
             return timerId;
 
         } else {
@@ -160,6 +149,18 @@ export class TimerFileManager {
 
     calculateInsertPosition(editor: any, lineNum: number, insertLocation: string): { before: number; after: number } {
         const lineText = editor.getLine(lineNum) || '';
+        const cursor = editor.getCursor?.();
+        if (cursor?.line === lineNum && editor.lineCount) {
+            const target = tableTarget(editor, lineNum, cursor.ch);
+            if (target?.cell) {
+                const { from, to } = target.cell;
+                const text = lineText.slice(from, to);
+                const position = insertLocation === 'tail'
+                    ? from + text.trimEnd().length
+                    : from + text.length - text.trimStart().length;
+                return { before: position, after: position };
+            }
+        }
 
         if (insertLocation === 'head') {
             const checkboxMatch = CHECKBOX_REGEX.exec(lineText);

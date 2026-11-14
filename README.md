@@ -60,6 +60,16 @@ A text block timing tool designed for Obsidian, allowing you to add a **count-up
 
 ![controlbycheckbox](https://github.com/wth461694678/text-block-timer/blob/main/demo/controlbycheckbox.gif)
 
+### Timers in Markdown tables
+
+Place the cursor inside a table cell and use Toggle timer. The head/tail insertion setting applies within that cell. Delete timer and Time Adjustment also target that cell, so cells in the same row can have independent timers. The separator row is not editable by timer commands.
+
+```md
+| Task | Time |
+| --- | --- |
+| Reading | Put the cursor here and toggle the timer |
+```
+
 ## Custom Settings
 
 Users can customize the following options in the plugin Settings:
