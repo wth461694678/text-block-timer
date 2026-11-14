@@ -59,6 +59,10 @@
 
 ![controlbycheckbox](https://github.com/wth461694678/text-block-timer/blob/main/demo/controlbycheckbox.gif)
 
+### Markdown 表格内计时
+
+将光标放在单元格内，执行“启动计时器/切换计时器状态”。首部/尾部插入设置作用于当前单元格；删除、调整时长也仅操作当前单元格的计时器。同一行的不同单元格可以独立计时，表头分隔行不会插入计时器。
+
 ## 自定义设置
 
 用户可以在插件设置中自定义以下选项：
