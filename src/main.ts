@@ -1,4 +1,4 @@
-import { tableTarget } from './io/TableCell';
+import { tableTarget, timerCursor } from './io/TableCell';
 import { Plugin, Notice, FileView, TFile, WorkspaceLeaf } from 'obsidian';
 import { EditorView } from '@codemirror/view';
 
@@ -168,7 +168,8 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
             icon: 'timer',
             name: getTranslation('command_name').toggle,
             editorCallback: (editor, view) => {
-                const cursor = editor.getCursor();
+                const cursor = timerCursor(editor);
+                if (!cursor) return;
                 const lineNum = cursor.line;
                 const lineText = editor.getLine(lineNum);
                 if (tableTarget(editor, lineNum, cursor.ch)?.cell === null) return;
@@ -192,7 +193,8 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
             icon: 'timer-off',
             name: getTranslation('command_name').delete,
             editorCallback: (editor, view) => {
-                const cursor = editor.getCursor();
+                const cursor = timerCursor(editor);
+                if (!cursor) return;
                 const lineNum = cursor.line;
                 const lineText = editor.getLine(lineNum);
                 if (tableTarget(editor, lineNum, cursor.ch)?.cell === null) return;
@@ -207,7 +209,8 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
             icon: 'clock',
             name: getTranslation('command_name').timeAdjust,
             editorCallback: (editor, view) => {
-                const cursor = editor.getCursor();
+                const cursor = timerCursor(editor);
+                if (!cursor) return;
                 const lineNum = cursor.line;
                 const lineText = editor.getLine(lineNum);
                 if (tableTarget(editor, lineNum, cursor.ch)?.cell === null) return;
@@ -408,7 +411,8 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
     }
 
     onEditorMenu(menu: any, editor: any, view: any) {
-        const cursor = editor.getCursor();
+        const cursor = timerCursor(editor);
+        if (!cursor) return;
         const lineNum = cursor.line;
         const lineText = editor.getLine(lineNum);
         if (tableTarget(editor, lineNum, cursor.ch)?.cell === null) return;

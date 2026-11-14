@@ -1,4 +1,4 @@
-import { Editor } from 'obsidian';
+import type { Editor, EditorPosition } from 'obsidian';
 
 export interface CellRange { from: number; to: number }
 
@@ -41,4 +41,36 @@ export function tableTarget(editor: Pick<Editor, 'getLine' | 'lineCount'>, line:
     if (separator < 1 || tableCells(editor.getLine(separator - 1)).length !== tableCells(editor.getLine(separator)).length) return null;
     if (line === separator) return { cell: null };
     return { cell: cells.find(c => ch >= c.from && ch <= c.to) ?? null };
+}
+
+/**
+ * Live Preview edits a cell in a nested CodeMirror editor. The public outer
+ * editor's cursor can still point outside that cell (especially an empty cell).
+ * Keep this guarded adapter separate from Markdown parsing: these table APIs
+ * are internal to Obsidian and must not silently fall back to a stale cursor.
+ */
+export function timerCursor(editor: Editor): EditorPosition | null {
+    const internal = editor as Editor & {
+        inTableCell?: boolean;
+        editorComponent?: { tableCell?: { cell?: LiveTableCell } };
+        getTableSelection?: () => LiveTableCell[];
+    };
+    const active = internal.editorComponent?.tableCell;
+    const selected = internal.getTableSelection?.() ?? [];
+    // A command operates on one cell, never an ambiguous rectangular selection.
+    if (selected.length > 1) return null;
+    const cell = selected[0] ?? active?.cell;
+    if (cell) {
+        const offsets = cell.getAbsoluteOffsets?.();
+        if (!offsets || !Number.isInteger(offsets.textStart) || offsets.textStart < 0) return null;
+        const cursor = editor.offsetToPos(offsets.textStart);
+        // Validate the mapped position against the current Markdown document.
+        return tableTarget(editor, cursor.line, cursor.ch)?.cell ? cursor : null;
+    }
+    if (active || internal.inTableCell) return null;
+    return editor.getCursor();
+}
+
+interface LiveTableCell {
+    getAbsoluteOffsets?: () => { textStart: number };
 }

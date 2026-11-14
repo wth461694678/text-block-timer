@@ -7,7 +7,7 @@ const require = createRequire(import.meta.url);
 const output = await build({ stdin: { contents: "export * from './src/io/TableCell'; export * from './src/io/TimerParser'; export * from './src/io/TimerFileManager';", resolveDir: process.cwd() }, bundle: true, platform: 'node', format: 'cjs', write: false, external: ['@codemirror/state'] });
 const mod = { exports: {} };
 new Function('require', 'module', 'exports', output.outputFiles[0].text)(require, mod, mod.exports);
-const { tableCells, tableTarget, TimerParser, TimerFileManager } = mod.exports;
+const { tableCells, tableTarget, timerCursor, TimerParser, TimerFileManager } = mod.exports;
 globalThis.document = parseHTML('<html></html>').document;
 const span = (id, dur = 0) => `<span class="timer-r" id="${id}" data-dur="${dur}" data-ts="1">【00:00】</span>`;
 function editor(rows, line = 2, ch = 3) {
@@ -68,4 +68,66 @@ test('reading mode atomically updates both timers by ID, including moved rows', 
     assert.equal(TimerParser.parse(content, 'auto', 'a').dur, 100);
     assert.equal(TimerParser.parse(content, 'auto', 'b').dur, 101);
     assert.equal(content.split('\n')[0], 'intro');
+});
+
+function liveEditor(rows, column) {
+    // Reproduces Live Preview: nested cell is active, outer cursor is at column 0.
+    const ed = editor(rows, 2, 0);
+    ed.offsetToPos = offset => {
+        const prefix = rows.join('\n').slice(0, offset).split('\n');
+        return { line: prefix.length - 1, ch: prefix.at(-1).length };
+    };
+    const cell = { getAbsoluteOffsets: () => ({ textStart: rows[0].length + rows[1].length + 2 + tableCells(rows[2])[column].from }) };
+    ed.editorComponent = { tableCell: { cell } };
+    ed.inTableCell = true;
+    ed.getTableSelection = () => [];
+    return ed;
+}
+test('Live Preview empty cell uses cell source position, not stale outer cursor', async () => {
+    const rows = ['| 1 | 2 |', '| --- | --- |', '|   |   |'];
+    const ed = liveEditor(rows, 0);
+    assert.deepEqual(ed.getCursor(), { line: 2, ch: 0 });
+    const cursor = timerCursor(ed);
+    assert.equal(cursor.line, 2);
+    assert.ok(cursor.ch > 0);
+    const fm = new TimerFileManager({}, { timerInsertLocation: 'head' });
+    await fm.writeTimer('first', { class: 'timer-r', timerId: 'first', dur: 0, ts: 1 }, { editor: ed }, {}, cursor.line);
+    assert.ok(rows[2].startsWith('|'));
+    assert.equal(tableCells(rows[2]).length, 2);
+    assert.equal(TimerParser.parseAtCursor(ed, 2, timerCursor(ed).ch).timerId, 'first');
+    assert.equal(rows[0], '| 1 | 2 |');
+    assert.equal(rows[1], '| --- | --- |');
+});
+test('Live Preview second-cell insertion and pause preserve first-cell timer', async () => {
+    const first = span('first');
+    const rows = ['| 1 | 2 |', '| --- | --- |', '| ' + first + ' |   |'];
+    const ed = liveEditor(rows, 1);
+    const fm = new TimerFileManager({}, { timerInsertLocation: 'tail' });
+    const cursor = timerCursor(ed);
+    assert.equal(TimerParser.parseAtCursor(ed, cursor.line, cursor.ch), null);
+    await fm.writeTimer('second', { class: 'timer-r', timerId: 'second', dur: 0, ts: 1 }, { editor: ed }, {}, cursor.line);
+    const selected = timerCursor(ed);
+    const parsed = TimerParser.parseAtCursor(ed, selected.line, selected.ch);
+    assert.equal(parsed.timerId, 'second');
+    await fm.writeTimer('second', { ...parsed, class: 'timer-p', dur: 12 }, { editor: ed }, {}, selected.line, parsed);
+    assert.ok(rows[2].includes(first));
+    assert.equal(TimerParser.parse(rows[2], 'auto', 'second').class, 'timer-p');
+    assert.equal(tableCells(rows[2]).length, 2);
+});
+test('Live Preview selection without a nested editor resolves a single selected cell', () => {
+    const rows = ['| 1 | 2 |', '| --- | --- |', '|   |   |'];
+    const ed = liveEditor(rows, 1);
+    const cell = ed.editorComponent.tableCell.cell;
+    ed.editorComponent = {};
+    ed.getTableSelection = () => [cell];
+    assert.equal(timerCursor(ed).ch, tableCells(rows[2])[1].from);
+    ed.getTableSelection = () => [cell, cell];
+    assert.equal(timerCursor(ed), null);
+});
+test('unsupported table internals fail closed instead of corrupting a stale outer line', () => {
+    const ed = editor(['| 1 | 2 |', '| --- | --- |', '|   |   |'], 2, 0);
+    ed.inTableCell = true;
+    assert.equal(timerCursor(ed), null);
+    ed.editorComponent = { tableCell: { cell: {} } };
+    assert.equal(timerCursor(ed), null);
 });

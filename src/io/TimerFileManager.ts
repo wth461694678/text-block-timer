@@ -1,4 +1,4 @@
-import { tableTarget } from './TableCell';
+import { tableTarget, timerCursor } from './TableCell';
 import { App, TFile } from 'obsidian';
 import { Transaction } from '@codemirror/state';
 import { TimerData } from '../core/TimerDataUpdater';
@@ -149,7 +149,7 @@ export class TimerFileManager {
 
     calculateInsertPosition(editor: any, lineNum: number, insertLocation: string): { before: number; after: number } {
         const lineText = editor.getLine(lineNum) || '';
-        const cursor = editor.getCursor?.();
+        const cursor = editor.getCursor ? timerCursor(editor) : null;
         if (cursor?.line === lineNum && editor.lineCount) {
             const target = tableTarget(editor, lineNum, cursor.ch);
             if (target?.cell) {
