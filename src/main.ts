@@ -1,4 +1,4 @@
-import { Plugin, Notice, FileView, TFile, WorkspaceLeaf } from 'obsidian';
+import { MarkdownView, Plugin, Notice, FileView, TFile, WorkspaceLeaf } from 'obsidian';
 import { EditorView } from '@codemirror/view';
 
 import { TimerData, TimerDataUpdater } from './core/TimerDataUpdater';
@@ -281,7 +281,10 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
         this.registerEditorExtension(
             EditorView.updateListener.of((update) => {
                 if (update.docChanged && this.settings.enableCheckboxToTimer && this.checkPathRestriction()) {
-                    const view = this.app.workspace.getActiveViewOfType(FileView);
+                    const view = this.app.workspace.getActiveViewOfType(MarkdownView);
+                    const file = view?.file;
+                    if (!view?.editor || !file || (view.editor as any).cm !== update.view) return;
+                    const handledLines = new Set<number>();
                     const oldDoc = update.startState.doc;
                     const newDoc = update.state.doc;
 
@@ -292,7 +295,8 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
                         const newEndLine = newDoc.lineAt(newTo).number;
 
                         if (Math.max(oldStartLine, oldEndLine, newStartLine, newEndLine) !== Math.min(oldStartLine, oldEndLine, newStartLine, newEndLine)) return;
-                        const lineNum = newStartLine - 1;
+                        if (handledLines.has(newStartLine)) return;
+                        handledLines.add(newStartLine);
 
                         const oldLineText = oldDoc.lineAt(oldFrom).text;
                         const newLineText = newDoc.lineAt(newFrom).text;
@@ -303,7 +307,26 @@ export default class TimerPlugin extends Plugin {    manager!: TimerManager;
                         const newCheckboxState = newLineText.match(CHECKBOX_REGEX)![2];
 
                         if (oldCheckboxState !== newCheckboxState) {
-                            this.toggleTimerbyCheckboxState(oldCheckboxState, newCheckboxState, newLineText, view, lineNum);
+                            // Wait for other editor listeners (including task sorters) to finish.
+                            queueMicrotask(() => {
+                                if (view.file !== file || (view.editor as any)?.cm !== update.view) return;
+                                const doc = update.view.state.doc;
+                                let line = newStartLine <= doc.lines ? doc.line(newStartLine) : null;
+                                if (line?.text !== newLineText) {
+                                    const timer = TimerParser.parse(newLineText);
+                                    if (!timer) return;
+                                    line = null;
+                                    for (let n = 1; n <= doc.lines; n++) {
+                                        const candidate = doc.line(n);
+                                        if (!candidate.text.includes('<span')) continue;
+                                        if (TimerParser.parse(candidate.text)?.timerId !== timer.timerId) continue;
+                                        if (line) return;
+                                        line = candidate;
+                                    }
+                                }
+                                if (!line || line.text.match(CHECKBOX_REGEX)?.[2] !== newCheckboxState) return;
+                                this.toggleTimerbyCheckboxState(oldCheckboxState, newCheckboxState, line.text, view, line.number - 1);
+                            });
                         }
                     });
                 }
